@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Test Management - Module</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a56d4;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --danger: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --gray-light: #e9ecef;
+      --border-radius: 8px;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f7fa;
+      color: var(--dark);
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 280px;
+      background-color: white;
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+      z-index: 10;
+      transition: all 0.3s ease-in-out;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.collapsed {
+      width: 60px;
+      padding: 20px 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--gray-light);
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      justify-content: center;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .sidebar h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar.collapsed h2 {
+      display: none;
+    }
+
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray);
+    }
+
+    .sidebar-toggle:hover {
+      color: var(--primary);
+    }
+
+    .sidebar.collapsed .sidebar-toggle {
+      width: 100%;
+    }
+
+    .sidebar form {
+      margin-bottom: 25px;
+    }
+
+    .sidebar.collapsed form {
+      display: none;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--dark);
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-light);
+      background-color: white;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 500;
+      padding: 10px 16px;
+      border: none;
+      background-color: var(--primary);
+      color: white;
+    }
+
+    button:hover {
+      background-color: var(--primary-dark);
+    }
+
+    button.danger {
+      background-color: var(--danger);
+    }
+
+    button.danger:hover {
+      background-color: #e5177e;
+    }
+
+    button.secondary {
+      background-color: var(--gray);
+    }
+
+    button.secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .folder-list {
+      list-style-type: none;
+      padding: 0;
+      flex-grow: 1;
+    }
+
+    .sidebar.collapsed .folder-list {
+      padding: 0 5px;
+    }
+
+    .folder-item {
+      padding: 6px 7px;
+      margin-bottom: 5px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar.collapsed .folder-item {
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    .sidebar.collapsed .folder-item span {
+      display: none;
+    }
+
+    .sidebar.collapsed .folder-item .folder-actions {
+      display: none;
+    }
+
+    .folder-item:hover {
+      background-color: rgba(67, 97, 238, 0.1);
+    }
+
+    .folder-item.active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .folder-item.active .folder-count {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .folder-item .folder-actions {
+      display: none;
+    }
+
+    .folder-item:hover .folder-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .folder-item.active .folder-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .folder-actions button {
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      background-color: transparent;
+      color: inherit;
+      border: none;
+    }
+
+    .folder-actions button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .folder-count {
+      font-size: 0.75rem;
+      color: var(--gray);
+      margin-left: 8px;
+    }
+
+    .content {
+      flex-grow: 1;
+      padding: 30px;
+      overflow-y: auto;
+      background-color: #f5f7fa;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .content h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .add-test-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .add-test-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 20px;
+      background-color: white;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      flex-grow: 1;
+    }
+
+    th,
+    td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-light);
+    }
+
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: var(--dark);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover {
+      background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .actions {
+      gap: 8px;
+      align-items: center;
+    }
+
+    .actions button {
+      padding: 0;
+      background: none;
+      border: none;
+      color: var(--gray);
+      font-size: 1rem;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .actions button:hover {
+      color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.1);
+    }
+
+    .actions button.danger:hover {
+      color: var(--danger);
+      background-color: rgba(247, 37, 133, 0.1);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: var(--border-radius);
+      color: white;
+      z-index: 9999;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .toast svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .toast-info {
+      background: var(--primary);
+    }
+
+    .toast-success {
+      background: #2ecc71;
+    }
+
+    .toast-error {
+      background: var(--danger);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+      }
+
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-content {
+      background: white;
+      padding: 25px;
+      width: 70%;
+      max-width: 95%;
+      border-radius: var(--border-radius);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--gray-light);
+    }
+
+    .modal-header h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--gray);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid var(--gray-light);
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    /* Quill editor styles */
+    .ql-container {
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      font-family: 'Inter', sans-serif;
+      min-height: 150px;
+    }
+
+    .ql-toolbar {
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      border-color: var(--gray-light) !important;
+    }
+
+    .ql-container.ql-snow {
+      border-color: var(--gray-light) !important;
+    }
+
+    .ql-editor {
+      padding: 12px 15px;
+    }
+
+    .ql-editor ol,
+    .ql-editor ul {
+      padding-left: 1.5em;
+    }
+
+    .ql-editor ol li:not(.ql-direction-rtl),
+    .ql-editor ul li:not(.ql-direction-rtl) {
+      padding-left: 0.5em;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+    }
+
+    .empty-state svg {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+    }
+
+    /* Test case steps styling */
+    .test-steps {
+      white-space: pre-wrap;
+      font-family: inherit;
+    }
+
+    .test-steps ol,
+    .test-steps ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    .pagination button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      background-color: var(--gray-light);
+      cursor: not-allowed;
+    }
+
+    .pagination span {
+      font-weight: 500;
+      color: var(--dark);
+    }
+
+    /* Folder hierarchy styles */
+    .folder-hierarchy {
+      list-style: none;
+      padding-left: 20px;
+      margin: 5px 0;
+    }
+
+    .folder-hierarchy .folder-item {
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .folder-hierarchy .folder-item::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      width: 10px;
+      height: 1px;
+      background-color: var(--gray);
+    }
+
+    .folder-hierarchy .folder-item::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 0;
+      width: 1px;
+      height: 100%;
+      background-color: var(--gray);
+    }
+
+    .folder-hierarchy .folder-item:last-child::after {
+      height: 50%;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-not-run {
+      background-color: #e9ecef;
+      color: #495057;
+    }
+
+    .status-pass {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-fail {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-blocked {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .modal-content {
+        width: 95%;
+      }
+
+      .sidebar.collapsed {
+        width: 100%;
+        max-height: 60px;
+      }
+
+      .sidebar.collapsed .sidebar-header {
+        justify-content: space-between;
+      }
+
+      .sidebar.collapsed .sidebar-toggle {
+        display: none;
+      }
+
+      .sidebar.collapsed .folder-list {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Test Folders</h2>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+
+    <form id="createFolderForm">
+      <div class="form-group">
+        <label for="folderName">New Folder</label>
+        <input type="text" id="folderName" name="folderName" placeholder="Enter folder name" required>
+      </div>
+      <div class="form-group">
+        <label for="parentFolder">Parent Folder</label>
+        <select id="parentFolder" name="parentId">
+          <option value="">None (Top Level)</option>
+        </select>
+      </div>
+      <button type="submit">Create Folder</button>
+    </form>
+
+    <ul class="folder-list" id="folderList">
+      <li class="folder-item" id="allTestsItem">
+        <a href="#" data-folder-id="all">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>All Test Cases</span>
+          <span class="folder-count" id="allTestsCount">0</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <div class="content-header">
+      <h2 id="contentTitle">All Test Cases</h2>
+      <div class="action-buttons">
+        <button class="add-test-btn" id="addTestBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Test Case
+        </button>
+        <button class="add-test-btn" id="exportBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="17" x2="12" y2="11"></line>
+            <polyline points="9 14 12 11 15 14"></polyline>
+          </svg>
+          Export to Excel
+        </button>
+        <button id="logoutBtn" style="background-color: brown;">Logout</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Folder</th>
+          <th>Steps</th>
+          <th>Expected Result</th>
+          <th>Created On</th>
+          <th>Created By</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tests">
+      </tbody>
+    </table>
+
+    <div class="pagination" id="pagination">
+      <button id="prevPage" disabled>Previous</button>
+      <span id="pageInfo">Page 1 of 1</span>
+      <button id="nextPage" disabled>Next</button>
+    </div>
+  </div>
+
+  <div id="addTestModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Test Case</h3>
+        <button class="modal-close" id="closeAddModal">&times;</button>
+      </div>
+      <form id="testCaseForm">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" id="title" name="title" placeholder="Enter test case title" required>
+        </div>
+
+        <div class="form-group">
+          <label for="folderId">Folder</label>
+          <select id="folderDropdown" name="folderId" required>
+            <option value="" disabled selected>Select a folder</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="steps">Steps</label>
+          <div id="stepsEditor" style="height: 200px;"></div>
+          <textarea id="steps" name="steps" style="display:none;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="expected">Expected Result</label>
+          <div id="expectedEditor" style="height: 150px;"></div>
+          <textarea id="expected" name="expected" style="display:none;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="comments">Comments</label>
+          <div id="commentsEditor" style="height: 100px;"></div>
+          <textarea id="comments" name="comments" style="display:none;"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="secondary" id="cancelAddTest">Cancel</button>
+          <button type="submit" id="submitTestForm">Add Test Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Test Case</h3>
+        <button class="modal-close" id="closeEditModal">&times;</button>
+      </div>
+      <form id="editTestCaseForm">
+        <input type="hidden" id="editTestId" name="id">
+        <input type="hidden" id="editTestCaseUniqueId" name="testCaseUniqueId">
+
+        <div class="form-group">
+          <label for="editTitle">Title</label>
+          <input type="text" id="editTitle" name="title" required>
+        </div>
+
+        <div class="form-group">
+          <label for="editFolderId">Folder</label>
+          <select id="editFolderDropdown" name="folderId" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="editSteps">Steps</label>
+          <div id="editStepsEditor" style="height: 200px;"></div>
+          <textarea id="editSteps" name="steps" style="display:none;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="editExpected">Expected Result</label>
+          <div id="editExpectedEditor" style="height: 150px;"></div>
+          <textarea id="editExpected" name="expected" style="display:none;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="editComments">Comments</label>
+          <div id="editCommentsEditor" style="height: 100px;"></div>
+          <textarea id="editComments" name="comments" style="display:none;"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="secondary" id="cancelEditTest">Cancel</button>
+          <button type="submit" id="submitEditTest">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-xlsx@0.0.8/dist/html-to-xlsx.min.js"></script>
+  <script>
+    // Constants and DOM elements
+    const TESTS_PER_PAGE = 25;
+    const folderList = document.getElementById('folderList');
+    const folderDropdown = document.getElementById('folderDropdown');
+    const parentFolderDropdown = document.getElementById('parentFolder');
+    const editFolderDropdown = document.getElementById('editFolderDropdown');
+    const testTable = document.getElementById('tests');
+    const addTestModal = document.getElementById('addTestModal');
+    const editModal = document.getElementById('editModal');
+    const editForm = document.getElementById('editTestCaseForm');
+    const contentTitle = document.getElementById('contentTitle');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    const allTestsCount = document.getElementById('allTestsCount');
+    const allTestsItem = document.getElementById('allTestsItem');
+
+    // State variables
+    let currentFolderId = null;
+    let currentPage = 1;
+    let totalTests = 0;
+    let allTestsData = [];
+    let allFolders = [];
+    let quillSteps, quillExpected, quillComments;
+    let quillEditSteps, quillEditExpected, quillEditComments;
+
+    // Initialize Quill editors
+    function initializeEditors() {
+      quillSteps = new Quill('#stepsEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['clean']
+          ]
+        },
+        placeholder: 'Enter test steps...'
+      });
+
+      quillExpected = new Quill('#expectedEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            ['clean']
+          ]
+        },
+        placeholder: 'Enter expected result...'
+      });
+
+      quillComments = new Quill('#commentsEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            ['clean']
+          ]
+        },
+        placeholder: 'Enter any comments...'
+      });
+
+      quillEditSteps = new Quill('#editStepsEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['clean']
+          ]
+        },
+        placeholder: 'Enter test steps...'
+      });
+
+      quillEditExpected = new Quill('#editExpectedEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            ['clean']
+          ]
+        },
+        placeholder: 'Enter expected result...'
+      });
+
+      quillEditComments = new Quill('#editCommentsEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            ['clean']
+          ]
+        },
+        placeholder: 'Enter any comments...'
+      });
+
+      // Auto-format steps as numbered list
+      quillSteps.on('editor-change', () => autoFormatList(quillSteps));
+      quillEditSteps.on('editor-change', () => autoFormatList(quillEditSteps));
+    }
+
+    function autoFormatList(quillInstance) {
+      if (quillInstance.getLength() === 1) {
+        quillInstance.formatLine(0, 1, { 'list': 'ordered' });
+      }
+    }
+
+    // Event listeners
+    function setupEventListeners() {
+      // Sidebar toggle
+      document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+      // Form submissions
+      document.getElementById('createFolderForm').addEventListener('submit', handleCreateFolder);
+      document.getElementById('testCaseForm').addEventListener('submit', handleAddTestCase);
+      editForm.addEventListener('submit', handleEditTestCase);
+
+      // Button actions
+      document.getElementById('addTestBtn').addEventListener('click', openAddTestModal);
+      document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      // Modal close buttons
+      document.getElementById('closeAddModal').addEventListener('click', closeModal);
+      document.getElementById('closeEditModal').addEventListener('click', closeModal);
+      document.getElementById('cancelAddTest').addEventListener('click', closeModal);
+      document.getElementById('cancelEditTest').addEventListener('click', closeModal);
+
+      // Pagination controls
+      prevPageBtn.addEventListener('click', goToPreviousPage);
+      nextPageBtn.addEventListener('click', goToNextPage);
+
+      // All tests item click
+      allTestsItem.addEventListener('click', (e) => {
+        e.preventDefault();
+        filterTestsByFolder('all');
+      });
+    }
+
+    // Folder management
+    function renderFolders(folders) {
+      allFolders = folders;
+      
+      // Clear existing folders (except "All Test Cases")
+      const folderItems = folderList.querySelectorAll('.folder-item:not(#allTestsItem)');
+      folderItems.forEach(item => item.remove());
+
+      // Build folder hierarchy
+      const rootFolders = folders.filter(f => !f.parentId);
+      rootFolders.forEach(folder => {
+        const folderItem = createFolderItem(folder);
+        folderList.appendChild(folderItem);
+        
+        // Add subfolders if they exist
+        const subfolders = folders.filter(f => f.parentId === folder.id);
+        if (subfolders.length > 0) {
+          const subfolderList = document.createElement('ul');
+          subfolderList.className = 'folder-hierarchy';
+          subfolders.forEach(subfolder => {
+            subfolderList.appendChild(createFolderItem(subfolder));
+          });
+          folderItem.appendChild(subfolderList);
+        }
+      });
+
+      // Update folder dropdowns
+      updateFolderDropdowns(folders);
+      
+      // Update "All Test Cases" count
+      allTestsCount.textContent = allTestsData.length;
+    }
+
+    function createFolderItem(folder) {
+      const folderItem = document.createElement('li');
+      folderItem.className = `folder-item ${currentFolderId === folder.id ? 'active' : ''}`;
+      folderItem.innerHTML = `
+        <a href="#" data-folder-id="${folder.id}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>${escapeHtml(folder.name)}</span>
+          <span class="folder-count">${folder.testCaseCount || 0}</span>
+        </a>
+        <button class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      `;
+      
+      // Add click handler for folder selection
+      folderItem.querySelector('a').addEventListener('click', (e) => {
+        e.preventDefault();
+        filterTestsByFolder(folder.id);
+      });
+      
+      // Add click handler for folder deletion
+      folderItem.querySelector('.delete-folder-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteFolder(folder.id);
+      });
+      
+      return folderItem;
+    }
+
+    function updateFolderDropdowns(folders) {
+      // Clear existing options (keep first option)
+      while (folderDropdown.options.length > 1) folderDropdown.remove(1);
+      while (editFolderDropdown.options.length > 1) editFolderDropdown.remove(1);
+      while (parentFolderDropdown.options.length > 1) parentFolderDropdown.remove(1);
+
+      // Add folders to dropdowns
+      folders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.id;
+        option.textContent = folder.name;
+        option.dataset.parentId = folder.parentId || '';
+        
+        // Indent subfolders
+        if (folder.parentId) {
+          option.textContent = '↳ ' + option.textContent;
+        }
+        
+        folderDropdown.appendChild(option.cloneNode(true));
+        editFolderDropdown.appendChild(option.cloneNode(true));
+        parentFolderDropdown.appendChild(option.cloneNode(true));
+      });
+    }
+
+    // Test case management
+    async function filterTestsByFolder(folderId) {
+      currentFolderId = folderId;
+      currentPage = 1;
+      
+
+      // Update active state in folder list
+      document.querySelectorAll('.folder-item').forEach(item => {
+        item.classList.remove('active');
+        const itemFolderId = item.querySelector('a')?.dataset.folderId;
+        if ((folderId === 'all' && item === allTestsItem) {
+          item.classList.add('active');
+        } else if (folderId && itemFolderId === folderId) {
+          item.classList.add('active');
+        }
+      });
+
+      // Update content title
+      if (folderId === 'all') {
+        contentTitle.textContent = 'All Test Cases';
+      } else {
+        const folder = allFolders.find(f => f.id == folderId);
+        contentTitle.textContent = folder ? `${folder.name} Test Cases` : 'Test Cases';
+      }
+
+      await fetchTests();
+    }
+
+    async function fetchTests() {
+      try {
+        showLoading(true);
+        
+        let url = '/api/tests';
+        if (currentFolderId && currentFolderId !== 'all') {
+          url += `?folderId=${currentFolderId}`;
+        }
+
+        const response = await fetch(url);
+
+        if (response.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+
+        const tests = await response.json();

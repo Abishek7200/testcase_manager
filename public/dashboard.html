@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9fafc;
+      margin: 0;
+      padding: 2rem;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    header {
+      position: absolute;
+      top: 1rem;
+      right: 2rem;
+    }
+
+    header button {
+      background-color: #ef4444;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    header button:hover {
+      background-color: #dc2626;
+    }
+
+    h2 {
+      margin-bottom: 2rem;
+      color: #3a3a3a;
+    }
+
+    .create-btn {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+      margin-bottom: 2rem;
+    }
+
+    .create-btn:hover {
+      background-color: #4338ca;
+    }
+
+    #moduleList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .module-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      min-width: 200px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s, background 0.3s;
+      flex: 1 1 200px;
+    }
+
+    .module-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .modal-content input,
+    .modal-content select {
+      padding: 0.7rem 1rem;
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .modal-content button[type="submit"] {
+      background-color: #4f46e5;
+      color: white;
+      border-radius: 8px;
+      border: none;
+      padding: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal-content button[type="submit"]:hover {
+      background-color: #4338ca;
+    }
+
+    .error-message {
+      color: red;
+      padding: 0.5rem;
+      background-color: #ffe4e6;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 999px;
+      color: white;
+      margin-top: 0.25rem;
+    }
+
+    .badge.production {
+      background-color: #22c55e;
+    }
+
+    .badge.peer-review {
+      background-color: #f59e0b;
+    }
+
+    .badge.presubmit {
+      background-color: #3b82f6;
+    }
+
+    .spinner {
+      border: 3px solid #ddd;
+      border-top: 3px solid #4f46e5;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <button onclick="logout()">Logout</button>
+  </header>
+
+  <h2>Dashboard</h2>
+
+  <button class="create-btn" onclick="showModal()">+ Create Module</button>
+
+  <div id="moduleList">Loading...</div>
+
+  <!-- Modal Popup -->
+  <div class="modal" id="modal">
+    <form class="modal-content" id="createModuleForm">
+      <h3>Create Module</h3>
+      <input type="text" name="name" placeholder="Module Name" required />
+      <button type="submit">Create</button>
+    </form>
+  </div>
+
+  <script>
+    const moduleList = document.getElementById('moduleList');
+    const modal = document.getElementById('modal');
+    const createModuleForm = document.getElementById('createModuleForm');
+
+    function showModal() {
+      modal.style.display = 'flex';
+    }
+
+    function hideModal() {
+      modal.style.display = 'none';
+    }
+
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) hideModal();
+    });
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        fetch('/api/logout').then(() => {
+          window.location.href = 'login.html';
+        });
+      }
+    }
+
+    async function fetchModules() {
+      try {
+        moduleList.innerHTML = 'Loading...';
+        const res = await fetch('/api/modules');
+        if (!res.ok) throw new Error('Failed to fetch modules');
+        const data = await res.json();
+
+        moduleList.innerHTML = '';
+        data.forEach(mod => {
+          const card = document.createElement('div');
+          card.className = 'module-card';
+          card.onclick = () => openModule(mod.id);
+          card.innerHTML = `<h4>${mod.name}</h4>`;
+          moduleList.appendChild(card);
+        });
+
+        if (data.length === 0) {
+          moduleList.innerHTML = '<p>No modules created yet.</p>';
+        }
+      } catch (err) {
+        moduleList.innerHTML = `<div class="error-message">${err.message}</div>`;
+      }
+    }
+
+    createModuleForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = createModuleForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const formData = new FormData(createModuleForm);
+        const res = await fetch('/api/modules', {
+          method: 'POST',
+          body: JSON.stringify(Object.fromEntries(formData.entries())),
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await res.json();
+        if (!res.ok || !result.success) throw new Error(result.message || 'Module creation failed');
+
+        hideModal();
+        fetchModules();
+        createModuleForm.reset();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    function openModule(id) {
+      localStorage.setItem('moduleId', id);
+      window.location.href = 'module.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchModules);
+  </script>
+</body>
+
+</html>

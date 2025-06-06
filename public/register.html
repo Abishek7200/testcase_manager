@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      color: #333;
+    }
+    form {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #444;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      padding: 0.7rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      border: 1.8px solid #ccc;
+      border-radius: 8px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      font-family: inherit;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 8px rgba(102, 126, 234, 0.5);
+    }
+    button {
+      background: #667eea;
+      color: white;
+      padding: 0.75rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #5563c1;
+    }
+    p {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    a:hover {
+      color: #44529e;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <form id="registerForm">
+    <h2>Register</h2>
+    <input type="text" name="username" placeholder="Username" required />
+    <input type="email" name="email" placeholder="Email" required aria-label="Email" />
+    <input type="password" name="password" placeholder="Password" required />
+    <button type="submit">Register</button>
+    <p>Already have an account? <a href="login.html">Login</a></p>
+  </form>
+
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+    
+      const username = event.target.username.value.trim();
+      const password = event.target.password.value;
+      const email = event.target.email.value.trim();
+    
+      // Client-side validation
+      if (!username || !email || !password) {
+        alert("Please enter username, email, and password.");
+        return;
+      }
+    
+      // Validate email format on client side
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert("Please enter a valid email address.");
+        return;
+      }
+    
+      // Validate username length
+      if (username.length < 3 || username.length > 50) {
+        alert("Username must be between 3 and 50 characters.");
+        return;
+      }
+    
+      // Validate password length
+      if (password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return;
+      }
+    
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            username,
+            email,
+            password
+          })
+        });
+    
+        const result = await response.json();
+    
+        if (response.ok) {
+          alert("Registration successful! Please login.");
+          window.location.href = "login.html";
+        } else {
+          alert(result.error || "Registration failed. Please try again.");
+        }
+      } catch (error) {
+        console.error("Registration error:", error);
+        alert("An error occurred while registering. Please try again later.");
+      }
+    });
+    </script>
+</body>
+</html>

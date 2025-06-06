@@ -1,0 +1,52 @@
+CREATE DATABASE IF NOT EXISTS testmgmt;
+USE testmgmt;
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE modules (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  username VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+);
+
+
+CREATE TABLE folders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  module_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE tests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  test_case_id VARCHAR(50),
+  title VARCHAR(255),
+  steps TEXT,
+  expected TEXT,
+  comments TEXT,
+  created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_by VARCHAR(50),
+  test_status VARCHAR(50),
+  module_id INT NOT NULL,
+  folder_id INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE,
+  FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
+);
+
+
+CREATE INDEX idx_tests_module_id ON tests(module_id);
+CREATE INDEX idx_tests_folder_id ON tests(folder_id);
+
+

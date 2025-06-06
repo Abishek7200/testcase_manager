@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Test Management - Module</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="./css/module.css">
+</head>
+
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Test Manager</h2>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="folder-search">
+      <input type="search" id="folderSearch" placeholder="Search folders..." autocomplete="off">
+    </div>
+    <form id="createFolderForm">
+      <div class="form-group">
+        <label for="folderName">New Folder</label>
+        <input type="text" id="folderName" name="folderName" placeholder="Enter folder name" required>
+      </div>
+      <div class="form-group">
+        <label for="parentFolder">Parent Folder</label>
+        <select id="parentFolder" name="parentId">
+          <option value="">None (Top Level)</option>
+        </select>
+      </div>
+      <button type="submit">Create Folder</button>
+    </form>
+
+    <ul class="folder-list" id="folderList">
+      <li class="folder-item" id="allTestsItem">
+        <a href="#" data-folder-id="all">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>All Test Cases</span>
+          <span class="folder-count" id="allTestsCount">0</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <div class="controls-container">
+      <!-- Search Bar -->
+      <div class="search-container">
+        <input type="search" id="searchInput" placeholder="Search by ID or Title..." autocomplete="off">
+      </div>
+
+      <div class="content-header">
+        <h2 id="contentTitle">All Test Cases</h2>
+        <div class="action-buttons">
+          <button class="add-test-btn" id="addTestBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Test Case
+          </button>
+          <button class="add-test-btn" id="importBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Import Test Cases
+          </button>
+          <button class="add-test-btn" id="exportBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="17" x2="12" y2="11"></line>
+              <polyline points="9 14 12 11 15 14"></polyline>
+            </svg>
+            Export to Excel
+          </button>
+          <button id="filterToggle" class="add-test-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path>
+            </svg>
+            Filters
+          </button>
+          <button id="logoutBtn" style="background-color: brown;">Logout</button>
+        </div>
+      </div>
+
+      <!-- Collapsible Filters Panel -->
+      <div id="filtersPanel" class="filters-panel">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Status</label>
+            <div class="filter-options">
+              <label class="filter-checkbox">
+                <input type="checkbox" value="Not Run" checked> Not Run
+              </label>
+              <label class="filter-checkbox">
+                <input type="checkbox" value="Pass" checked> Pass
+              </label>
+              <label class="filter-checkbox">
+                <input type="checkbox" value="Fail" checked> Fail
+              </label>
+              <label class="filter-checkbox">
+                <input type="checkbox" value="Blocked" checked> Blocked
+              </label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label>Created By</label>
+            <select id="createdByFilter" class="compact-select">
+              <option value="">All Users</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Date Range</label>
+            <select id="dateFilter" class="compact-select">
+              <option value="">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Folder</label>
+            <select id="folderFilter" class="compact-select">
+              <option value="">All Folders</option>
+            </select>
+          </div>
+
+          <button id="aplyFilters" class="primary-btn">Apply</button>
+          <button id="resetFilters" class="secondary-btn">Reset</button>
+        </div>
+      </div>
+
+       <!-- Report Visualization -->
+       <div class="test-report">
+        <div class="report-card total-tests">
+          <span class="report-count" id="totalTestsCount">0</span>
+          <span class="report-label">Total Tests</span>
+        </div>
+        <div class="report-card passed-tests">
+          <span class="report-count" id="passedTestsCount">0</span>
+          <span class="report-label">Passed</span>
+        </div>
+        <div class="report-card failed-tests">
+          <span class="report-count" id="failedTestsCount">0</span>
+          <span class="report-label">Failed</span>
+        </div>
+        <div class="report-card not-run-tests">
+          <span class="report-count" id="notRunTestsCount">0</span>
+          <span class="report-label">Not Run</span>
+        </div>
+        <div class="report-card blocked-tests">
+          <span class="report-count" id="blockedTestsCount">0</span>
+          <span class="report-label">Blocked</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Folder</th>
+            <th>Steps</th>
+            <th>Expected Result</th>
+            <th>Created On</th>
+            <th>Created By</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tests">
+        </tbody>
+      </table>
+
+      <div class="pagination" id="pagination">
+        <button id="prevPage" disabled>Previous</button>
+        <span id="pageInfo">Page 1 of 1</span>
+        <button id="nextPage" disabled>Next</button>
+      </div>
+    </div>
+
+    <div id="importModal" class="modal">
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h3>Import Test Cases</h3>
+          <button class="modal-close" id="closeImportModal">&times;</button>
+        </div>
+        <div class="form-group">
+          <label for="excelData">Paste Excel Data Here:</label>
+          <textarea id="excelData" rows="10" style="width: 100%; font-family: monospace;"
+            placeholder="Paste your Excel data here (including headers)..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Column Mapping:</label>
+          <div id="columnMapping" style="margin-top: 10px;">
+            <!-- Will be populated dynamically -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="secondary" id="cancelImport">Cancel</button>
+          <button type="button" id="confirmImport">Import Test Cases</button>
+        </div>
+        <div class="import-instructions">
+          <h4>How to import:</h4>
+          <ol>
+            <li>Copy from Excel (columns: <strong>Title, Folder, Steps, Expected, Comments</strong>)</li>
+            <li>Paste in the box above</li>
+            <li>Other fields (ID, Status, etc.) will be auto-generated</li>
+          </ol>
+          <div class="example">
+            <strong>Example:</strong>
+            <pre>
+      Title           Folder      Steps                          Expected              Comments
+      Login Test      Auth        1. Go to login page            Should see dashboard  Test account
+                                  2. Enter credentials
+                                  3. Click submit</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="addTestModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Add New Test Case</h3>
+          <button class="modal-close" id="closeAddModal">&times;</button>
+        </div>
+        <form id="testCaseForm">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" placeholder="Enter test case title" required>
+          </div>
+
+          <div class="form-group">
+            <label for="folderId">Folder</label>
+            <select id="folderDropdown" name="folderId" required>
+              <option value="" disabled selected>Select a folder</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="steps">Steps</label>
+            <div id="stepsEditor" style="height: 200px;"></div>
+            <textarea id="steps" name="steps" style="display:none;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="expected">Expected Result</label>
+            <div id="expectedEditor" style="height: 150px;"></div>
+            <textarea id="expected" name="expected" style="display:none;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="comments">Comments</label>
+            <div id="commentsEditor" style="height: 100px;"></div>
+            <textarea id="comments" name="comments" style="display:none;"></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="secondary" id="cancelAddTest">Cancel</button>
+            <button type="submit" id="submitTestForm">Add Test Case</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Edit Test Case</h3>
+          <button class="modal-close" id="closeEditModal">&times;</button>
+        </div>
+        <form id="editTestCaseForm">
+          <input type="hidden" id="editTestId" name="id">
+          <input type="hidden" id="editTestCaseUniqueId" name="testCaseUniqueId">
+
+          <div class="form-group">
+            <label for="editTitle">Title</label>
+            <input type="text" id="editTitle" name="title" required>
+          </div>
+
+          <div class="form-group">
+            <label for="editFolderId">Folder</label>
+            <select id="editFolderDropdown" name="folderId" required></select>
+          </div>
+
+          <div class="form-group">
+            <label for="editSteps">Steps</label>
+            <div id="editStepsEditor" style="height: 200px;"></div>
+            <textarea id="editSteps" name="steps" style="display:none;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="editExpected">Expected Result</label>
+            <div id="editExpectedEditor" style="height: 150px;"></div>
+            <textarea id="editExpected" name="expected" style="display:none;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="editComments">Comments</label>
+            <div id="editCommentsEditor" style="height: 100px;"></div>
+            <textarea id="editComments" name="comments" style="display:none;"></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="secondary" id="cancelEditTest">Cancel</button>
+            <button type="submit" id="submitEditTest">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-xlsx@0.0.8/dist/html-to-xlsx.min.js"></script>
+    <script>
+      // Constants and DOM elements
+      const TESTS_PER_PAGE = 25;
+      const folderList = document.getElementById('folderList');
+      const folderDropdown = document.getElementById('folderDropdown');
+      const parentFolderDropdown = document.getElementById('parentFolder');
+      const editFolderDropdown = document.getElementById('editFolderDropdown');
+      const testTable = document.getElementById('tests');
+      const addTestModal = document.getElementById('addTestModal');
+      const editModal = document.getElementById('editModal');
+      const editForm = document.getElementById('editTestCaseForm');
+      const contentTitle = document.getElementById('contentTitle');
+      const pageInfo = document.getElementById('pageInfo');
+      const prevPageBtn = document.getElementById('prevPage');
+      const nextPageBtn = document.getElementById('nextPage');
+      const allTestsCount = document.getElementById('allTestsCount');
+      const allTestsItem = document.getElementById('allTestsItem');
+
+      let username = localStorage.getItem('username');
+
+      // State variables
+      let currentFolderId = null;
+      let currentPage = 1;
+      let totalTests = 0;
+      let allTestsData = [];
+      let allFolders = [];
+      let quillSteps, quillExpected, quillComments;
+      let quillEditSteps, quillEditExpected, quillEditComments;
+
+      // Initialize Quill editors
+      function initializeEditors() {
+        quillSteps = new Quill('#stepsEditor', {
+          theme: 'snow',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+              ['clean']
+            ]
+          },
+          placeholder: 'Enter test steps...'
+        });
+
+        quillExpected = new Quill('#expectedEditor', {
+          theme: 'snow',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              ['clean']
+            ]
+          },
+          placeholder: 'Enter expected result...'
+        });
+
+        quillComments = new Quill('#commentsEditor', {
+          theme: 'snow',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              ['clean']
+            ]
+          },
+          placeholder: 'Enter any comments...'
+        });
+
+        quillEditSteps = new Quill('#editStepsEditor', {
+          theme: 'snow',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+              ['clean']
+            ]
+          },
+          placeholder: 'Enter test steps...'
+        });
+
+        quillEditExpected = new Quill('#editExpectedEditor', {
+          theme: 'snow',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              ['clean']
+            ]
+          },
+          placeholder: 'Enter expected result...'
+        });
+
+        quillEditComments = new Quill('#editCommentsEditor', {
+          theme: 'snow',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              ['clean']
+            ]
+          },
+          placeholder: 'Enter any comments...'
+        });
+
+        // Auto-format steps as numbered list
+        quillSteps.on('editor-change', () => autoFormatList(quillSteps));
+        quillEditSteps.on('editor-change', () => autoFormatList(quillEditSteps));
+      }
+
+      function autoFormatList(quillInstance) {
+        if (quillInstance.getLength() === 1) {
+          quillInstance.formatLine(0, 1, { 'list': 'ordered' });
+        }
+      }
+
+      // Event listeners
+      function setupEventListeners() {
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+        // Form submissions
+        document.getElementById('createFolderForm').addEventListener('submit', handleCreateFolder);
+        document.getElementById('testCaseForm').addEventListener('submit', handleAddTestCase);
+        editForm.addEventListener('submit', handleEditTestCase);
+
+        // Button actions
+        document.getElementById('addTestBtn').addEventListener('click', openAddTestModal);
+        document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // Modal close buttons
+        document.getElementById('closeAddModal').addEventListener('click', closeModal);
+        document.getElementById('closeEditModal').addEventListener('click', closeModal);
+        document.getElementById('cancelAddTest').addEventListener('click', closeModal);
+        document.getElementById('cancelEditTest').addEventListener('click', closeModal);
+
+        // Pagination controls
+        prevPageBtn.addEventListener('click', goToPreviousPage);
+        nextPageBtn.addEventListener('click', goToNextPage);
+
+        // All tests item click
+        allTestsItem.addEventListener('click', (e) => {
+          e.preventDefault();
+          filterTestsByFolder('all');
+        });
+      }
+
+      // Folder management
+      function renderFolders(folders) {
+        allFolders = folders;
+
+        // Clear existing folders (except "All Test Cases")
+        const folderItems = folderList.querySelectorAll('.folder-item:not(#allTestsItem)');
+        folderItems.forEach(item => item.remove());
+
+        // Build folder hierarchy
+        const rootFolders = folders.filter(f => !f.parentId);
+        rootFolders.forEach(folder => {
+          const folderItem = createFolderItem(folder);
+          folderList.appendChild(folderItem);
+
+          // Add subfolders if they exist
+          const subfolders = folders.filter(f => f.parentId === folder.id);
+          if (subfolders.length > 0) {
+            const subfolderList = document.createElement('ul');
+            subfolderList.className = 'folder-hierarchy';
+            subfolders.forEach(subfolder => {
+              subfolderList.appendChild(createFolderItem(subfolder));
+            });
+            folderItem.appendChild(subfolderList);
+          }
+        });
+
+        // Update folder dropdowns
+        updateFolderDropdowns(folders);
+
+        // Update "All Test Cases" count
+        allTestsCount.textContent = allTestsData.length;
+      }
+
+      function createFolderItem(folder) {
+        const folderItem = document.createElement('li');
+  folderItem.className = `folder-item ${currentFolderId === folder.id ? 'active' : ''}`;
+  
+  // Add indentation class if it's a subfolder
+  const indentClass = folder.parentId ? 'subfolder' : '';
+  
+  folderItem.innerHTML = `
+    <div class="folder-content ${indentClass}">
+      <a href="#" data-folder-id="${folder.id}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>${escapeHtml(folder.name)}</span>
+        <span class="folder-count">${folder.testCaseCount || 0}</span>
+      </a>
+    </div>
+    <span class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+      </span>
+  `;
+        // Add click handler for folder selection
+        folderItem.querySelector('a').addEventListener('click', (e) => {
+          e.preventDefault();
+          filterTestsByFolder(folder.id);
+        });
+
+        // Add click handler for folder deletion
+        folderItem.querySelector('.delete-folder-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteFolder(folder.id);
+        });
+
+        return folderItem;
+      }
+
+      function updateFolderDropdowns(folders) {
+        // Clear existing options (keep first option)
+        while (folderDropdown.options.length > 1) folderDropdown.remove(1);
+        while (editFolderDropdown.options.length > 1) editFolderDropdown.remove(1);
+        while (parentFolderDropdown.options.length > 1) parentFolderDropdown.remove(1);
+
+        // Add folders to dropdowns
+        folders.forEach(folder => {
+          const option = document.createElement('option');
+          option.value = folder.id;
+          option.textContent = folder.name;
+          option.dataset.parentId = folder.parentId || '';
+
+          // Indent subfolders
+          if (folder.parentId) {
+            option.textContent = '↳ ' + option.textContent;
+          }
+
+          folderDropdown.appendChild(option.cloneNode(true));
+          editFolderDropdown.appendChild(option.cloneNode(true));
+          parentFolderDropdown.appendChild(option.cloneNode(true));
+        });
+      }
+
+      // Update fetchFolders to use these rendering functions
+      async function fetchFolders() {
+        try {
+          const response = await fetch(`/api/folders`);
+
+          if (response.status === 401) {
+            window.location.href = 'login.html';
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+
+          const folders = await response.json();
+          renderFolders(folders);
+          updateFolderDropdowns(folders);
+
+          // If we're viewing a folder that might have been deleted, reset to "all"
+          if (currentFolderId && !folders.some(f => f.id == currentFolderId)) {
+            filterTestsByFolder('all');
+          }
+
+        } catch (error) {
+          console.error('Error fetching folders:', error);
+          showToast(`Failed to load folders: ${error.message}`, 'error');
+        }
+      }
+
+      // Test case management
+      async function filterTestsByFolder(folderId) {
+        currentFolderId = folderId;
+  
+  // Update active state in folder list
+  document.querySelectorAll('.folder-item').forEach(item => {
+    item.classList.remove('active');
+    const itemFolderId = item.querySelector('a')?.dataset.folderId;
+    if ((folderId === 'all' && item === allTestsItem)) {
+      item.classList.add('active');
+    } else if (folderId && itemFolderId === folderId) {
+      item.classList.add('active');
+    }
+  });
+
+        // Update content title
+        if (folderId === 'all') {
+          contentTitle.textContent = 'All Test Cases';
+        } else {
+          const folder = allFolders.find(f => f.id == folderId);
+          contentTitle.textContent = folder ? `${folder.name} Test Cases` : 'Test Cases';
+        }
+
+        await fetchTests();
+      }
+
+      async function fetchTests() {
+        try {
+          showLoading(true);
+
+          let url = '/api/tests';
+          if (currentFolderId && currentFolderId !== 'all') {
+            url += `?folderId=${currentFolderId}`;
+          }
+
+          const response = await fetch(url);
+
+          if (response.status === 401) {
+            window.location.href = 'login.html';
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+
+          const tests = await response.json();
+          allTestsData = tests;
+          filteredTests = [...allTestsData]; // Initialize filteredTests
+          totalTests = tests.length;
+
+          renderTestsForPage();
+          updatePaginationControls();
+          updateReport();
+          populateFilterOptions();
+
+          // Update "All Test Cases" count
+          allTestsCount.textContent = allTestsData.length;
+
+        } catch (error) {
+          console.error('Error fetching tests:', error);
+          showToast(`Failed to load test cases: ${error.message}`, 'error');
+          allTestsData = [];
+          renderTestsForPage();
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      function renderTestsForPage() {
+        testTable.innerHTML = '';
+
+        const startIndex = (currentPage - 1) * TESTS_PER_PAGE;
+        const endIndex = Math.min(startIndex + TESTS_PER_PAGE, allTestsData.length);
+        const testsToDisplay = allTestsData.slice(startIndex, endIndex);
+
+        if (testsToDisplay.length === 0) {
+          showEmptyState();
+          return;
+        }
+
+        testsToDisplay.forEach(test => {
+          const row = createTestRow(test);
+          testTable.appendChild(row);
+        });
+
+        setupRowEventHandlers();
+      }
+
+      function createTestRow(test) {
+        const row = document.createElement('tr');
+        const createdDate = test.createdDate ? new Date(test.createdDate).toLocaleDateString() : 'N/A';
+        const statusDropdown = createStatusDropdown(test);
+
+        row.innerHTML = `
+        <td>${test.testCaseId || 'N/A'}</td>
+        <td>${escapeHtml(test.title)}</td>
+        <td>${test.folder ? escapeHtml(test.folder.name) : 'Uncategorized'}</td>
+        <td class="test-steps">${test.steps || ''}</td>
+        <td class="test-steps">${test.expected || ''}</td>
+        <td>${createdDate}</td>
+        <td>${test.createdBy || username}</td>
+        <td>${statusDropdown}</td>
+        <td class="actions">
+          <button data-test-id="${test.id}" class="edit-test-btn" title="Edit Test Case">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+          <button data-test-id="${test.id}" class="danger delete-test-btn" title="Delete Test Case">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </td>
+      `;
+
+        return row;
+      }
+
+      function createStatusDropdown(test) {
+        const statusOptions = ['Not Run', 'Pass', 'Fail', 'Blocked'];
+        const statusClasses = {
+          'Not Run': 'status-not-run',
+          'Pass': 'status-pass',
+          'Fail': 'status-fail',
+          'Blocked': 'status-blocked'
+        };
+
+        return `
+        <select class="test-status-dropdown" data-test-id="${test.id}">
+          ${statusOptions.map(option =>
+          `<option value="${option}" ${test.testStatus === option ? 'selected' : ''}>${option}</option>`
+        ).join('')}
+        </select>
+      `;
+      }
+
+      function setupRowEventHandlers() {
+        // Status dropdown changes
+        document.querySelectorAll('.test-status-dropdown').forEach(dropdown => {
+          dropdown.addEventListener('change', async (event) => {
+            const testId = event.target.dataset.testId;
+            const newStatus = event.target.value;
+            await updateTestStatus(testId, newStatus);
+          });
+        });
+
+        // Edit buttons
+        document.querySelectorAll('.edit-test-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const testId = btn.dataset.testId;
+            const test = allTestsData.find(t => t.id == testId);
+            if (test) {
+              openEditModal(
+                test.id,
+                test.title,
+                test.steps,
+                test.expected,
+                test.comments || '',
+                test.folder ? test.folder.id : '',
+                test.testCaseId || ''
+              );
+            }
+          });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.delete-test-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const testId = btn.dataset.testId;
+            deleteTest(testId);
+          });
+        });
+      }
+
+      function showEmptyState() {
+        testTable.innerHTML = `
+        <tr>
+          <td colspan="9" class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3>No test cases found</h3>
+            <p>${currentFolderId && currentFolderId !== 'all' ?
+            'This folder is empty' :
+            'Create your first test case to get started'}</p>
+          </td>
+        </tr>`;
+      }
+
+      // Pagination
+      function updatePaginationControls() {
+        const totalPages = Math.ceil(totalTests / TESTS_PER_PAGE);
+
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages || totalTests === 0;
+      }
+
+      function goToPreviousPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTestsForPage();
+          updatePaginationControls();
+        }
+      }
+
+      function goToNextPage() {
+        const totalPages = Math.ceil(totalTests / TESTS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTestsForPage();
+          updatePaginationControls();
+        }
+      }
+
+      // Modal functions
+      function openAddTestModal() {
+        addTestModal.style.display = 'flex';
+        document.getElementById('title').focus();
+        quillSteps.setContents([{ insert: '\n' }]);
+        quillSteps.formatLine(0, 1, { 'list': 'ordered' });
+        quillExpected.setContents([{ insert: '\n' }]);
+        quillComments.setContents([{ insert: '\n' }]);
+      }
+
+      function openEditModal(id, title, steps, expected, comments, folderId, testCaseUniqueId) {
+        document.getElementById('editTestId').value = id;
+        document.getElementById('editTestCaseUniqueId').value = testCaseUniqueId;
+        document.getElementById('editTitle').value = title;
+        document.getElementById('editFolderDropdown').value = folderId || '';
+
+        quillEditSteps.root.innerHTML = steps;
+        quillEditExpected.root.innerHTML = expected;
+        quillEditComments.root.innerHTML = comments || '';
+
+        editModal.style.display = 'flex';
+      }
+
+      function closeModal() {
+        addTestModal.style.display = 'none';
+        editModal.style.display = 'none';
+      }
+
+      // Form handlers
+      async function handleCreateFolder(e) {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        try {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner"></span> Creating...';
+
+          const folderName = form.folderName.value.trim();
+          if (!folderName) {
+            throw new Error('Folder name is required');
+          }
+
+          const parentId = form.parentId.value || null;
+
+          const res = await fetch('/api/folders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: folderName, parentId })
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to create folder');
+          }
+
+          form.reset();
+          await fetchFolders();
+          showToast('Folder created successfully', 'success');
+
+        } catch (error) {
+          showToast(error.message, 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Folder';
+        }
+      }
+
+      async function handleAddTestCase(e) {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        try {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner"></span> Adding...';
+
+          // Update hidden fields with Quill content
+          document.getElementById('steps').value = quillSteps.root.innerHTML;
+          document.getElementById('expected').value = quillExpected.root.innerHTML;
+          document.getElementById('comments').value = quillComments.root.innerHTML;
+
+          const formData = new FormData(form);
+          const body = Object.fromEntries(formData.entries());
+
+          if (!body.folderId) {
+            throw new Error('Please select a folder');
+          }
+
+          body.testCaseId = generateUniqueId();
+          body.createdDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+          body.createdBy = username;
+
+          const res = await fetch('/api/tests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to create test case');
+          }
+
+          form.reset();
+          // quillSteps.setContents([{ insert: '\n' }]);
+          // quillExpected.setContents([{ insert: '\n' }]);
+          // quillComments.setContents([{ insert: '\n' }]);
+          closeModal();
+
+          await fetchTests();
+          showToast('Test case created successfully', 'success');
+
+        } catch (error) {
+          showToast(error.message, 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Add Test Case';
+        }
+      }
+
+      async function handleEditTestCase(e) {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        try {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner"></span> Saving...';
+
+          // Update hidden fields with Quill content
+          document.getElementById('editSteps').value = quillEditSteps.root.innerHTML;
+          document.getElementById('editExpected').value = quillEditExpected.root.innerHTML;
+          document.getElementById('editComments').value = quillEditComments.root.innerHTML;
+
+          const formData = new FormData(editForm);
+          const body = Object.fromEntries(formData.entries());
+
+          const res = await fetch('/api/tests', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to update test case');
+          }
+
+          closeModal();
+          await fetchTests();
+          showToast('Test case updated successfully', 'success');
+
+        } catch (error) {
+          showToast(error.message, 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save Changes';
+        }
+      }
+
+      // CRUD operations
+      async function deleteTest(id) {
+        if (!confirm('Are you sure you want to delete this test case?')) return;
+
+        try {
+          showLoading(true);
+
+          const res = await fetch(`/api/tests/${id}`, {
+            method: 'DELETE'
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to delete test case');
+          }
+
+          await fetchTests();
+          showToast('Test case deleted successfully', 'success');
+
+        } catch (error) {
+          showToast(error.message, 'error');
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      async function deleteFolder(id) {
+        if (!confirm('Are you sure you want to delete this folder and all its test cases? This action cannot be undone.')) return;
+
+        try {
+          showLoading(true);
+
+          const res = await fetch(`/api/folders/${id}`, {
+            method: 'DELETE'
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to delete folder');
+          }
+
+          currentFolderId = 'all';
+          await fetchFolders();
+          showToast('Folder and its test cases deleted successfully', 'success');
+
+        } catch (error) {
+          showToast(error.message, 'error');
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      async function updateTestStatus(testId, newStatus) {
+        try {
+          const res = await fetch(`/api/tests/${testId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testStatus: newStatus })
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to update test status');
+          }
+
+          showToast('Test status updated successfully', 'success');
+
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      }
+
+      async function exportToExcel() {
+        if (allTestsData.length === 0) {
+          showToast('No test cases to export.', 'info');
+          return;
+        }
+
+        try {
+          showLoading(true);
+
+          // Create worksheet data with formatted content
+          const worksheetData = [
+            // Header row
+            [
+              'Test Case ID',
+              'Title',
+              'Folder',
+              'Steps',
+              'Expected Result',
+              'Comments',
+              'Created On',
+              'Created By',
+              'Status'
+            ],
+            // Data rows
+            ...allTestsData.map(test => [
+              test.testCaseId || '',
+              test.title || '',
+              test.folder ? test.folder.name : 'Uncategorized',
+              // Convert HTML to plain text but preserve line breaks and lists
+              htmlToText(test.steps || ''),
+              htmlToText(test.expected || ''),
+              htmlToText(test.comments || ''),
+              test.createdDate ? new Date(test.createdDate).toLocaleDateString() : '',
+              test.createdBy || '',
+              test.testStatus || 'Not Run'
+            ])
+          ];
+
+          // Create workbook
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+
+          // Apply bold style to header row (A1 to I1)
+          const headerRange = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1'];
+
+          headerRange.forEach(cell => {
+            if (!ws[cell]) return;
+            ws[cell].s = {
+              font: {
+                bold: true,
+                color: { rgb: "000000" }
+              }
+            };
+          });
+
+          // Add worksheet to workbook
+          XLSX.utils.book_append_sheet(wb, ws, "Test Cases");
+
+          // Generate filename
+          const fileName = `TestCases_${currentFolderId === 'all' ? 'All' : currentFolderId || 'All'}.xlsx`;
+
+          // Export to Excel
+          XLSX.writeFile(wb, fileName);
+
+          showToast('Test cases exported to Excel!', 'success');
+
+        } catch (error) {
+          console.error('Export error:', error);
+          showToast('Failed to export test cases: ' + error.message, 'error');
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      function htmlToText(html) {
+        if (!html) return '';
+
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // Handle <ol> and <ul> with proper list formatting
+        const lists = temp.querySelectorAll('ol, ul');
+        lists.forEach(list => {
+          const items = list.querySelectorAll('li');
+          let counter = 1;
+
+          items.forEach(item => {
+            const prefix = list.tagName === 'OL' ? `${counter++}. ` : '• ';
+            item.textContent = prefix + item.textContent;
+
+            // Add line break after each item for Excel
+            item.innerHTML += '\r\n';
+          });
+
+          // Replace list with its child items
+          list.replaceWith(...Array.from(list.childNodes));
+        });
+
+        // Convert <br> to Excel-style newline
+        temp.querySelectorAll('br').forEach(br => br.replaceWith('\r\n'));
+
+        // Add newline after block elements like <p> and <div>
+        temp.querySelectorAll('p, div').forEach(el => {
+          el.innerHTML += '\r\n';
+        });
+
+        // Final clean text output
+        return temp.textContent.trim();
+      }
+
+
+      // Authentication
+      async function checkAuthentication() {
+        try {
+          const response = await fetch('/api/check-auth');
+          if (!response.ok) return false;
+
+          const data = await response.json();
+          return data.authenticated;
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          return false;
+        }
+      }
+
+      async function logout() {
+        if (!confirm('Are you sure you want to logout?')) return;
+
+        try {
+          const res = await fetch('/api/logout');
+
+          if (!res.ok) {
+            throw new Error('Logout failed');
+          }
+
+          // Remove username from localStorage
+          localStorage.removeItem('username');
+
+          window.location.href = 'login.html';
+
+        } catch (error) {
+          console.error('Logout error:', error);
+          showToast('Logout failed. Please try again.', 'error');
+        }
+      }
+
+      // Helper functions
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function generateUniqueId() {
+        const prefix = 'TC';
+        const now = Date.now();
+        const random = Math.floor(Math.random() * 10000);
+        return `${prefix}${String(now + random).slice(-4)}`;
+      }
+
+      function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        const icons = {
+          success: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>',
+          error: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>',
+          info: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" /></svg>'
+        };
+
+        toast.innerHTML = `${icons[type] || icons.info} ${message}`;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      function showLoading(show) {
+        const loadingOverlay = document.getElementById('loadingOverlay') || document.createElement('div');
+        if (show) {
+          loadingOverlay.id = 'loadingOverlay';
+          loadingOverlay.style.position = 'fixed';
+          loadingOverlay.style.top = '0';
+          loadingOverlay.style.left = '0';
+          loadingOverlay.style.width = '100%';
+          loadingOverlay.style.height = '100%';
+          loadingOverlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+          loadingOverlay.style.display = 'flex';
+          loadingOverlay.style.justifyContent = 'center';
+          loadingOverlay.style.alignItems = 'center';
+          loadingOverlay.style.zIndex = '9999';
+          loadingOverlay.innerHTML = '<div class="spinner" style="width: 40px; height: 40px;"></div>';
+          document.body.appendChild(loadingOverlay);
+        } else {
+          loadingOverlay.remove();
+        }
+      }
+
+      function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebar.classList.toggle('collapsed');
+
+        if (sidebar.classList.contains('collapsed')) {
+          sidebarToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18l6-6-6-6"></path>
+          </svg>
+        `;
+        } else {
+          sidebarToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        `;
+        }
+      }
+
+      // Initialize application
+      async function initializeApp() {
+        try {
+          // Check authentication first
+          if (!await checkAuthentication()) {
+            window.location.href = 'login.html';
+            return;
+          }
+
+          initializeEditors();
+          setupEventListeners();
+          setupSearchAndFilters();
+          setupFolderSearch();
+
+          // Fetch data
+          await Promise.all([
+            fetchTests(),
+            fetchFolders()
+          ]);
+
+        } catch (error) {
+          console.error('Initialization error:', error);
+          showToast('Failed to initialize application', 'error');
+          window.location.href = 'login.html';
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', initializeApp);
+
+      // Add to your existing event listeners
+      document.getElementById('importBtn').addEventListener('click', openImportModal);
+      document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
+      document.getElementById('cancelImport').addEventListener('click', closeImportModal);
+      document.getElementById('confirmImport').addEventListener('click', processImportedData);
+
+      // Import modal functions
+      function openImportModal() {
+        document.getElementById('importModal').style.display = 'flex';
+        document.getElementById('excelData').focus();
+      }
+
+      function closeImportModal() {
+        document.getElementById('importModal').style.display = 'none';
+        document.getElementById('excelData').value = '';
+      }
+
+      function parseExcelData(data) {
+        const rows = data.split('\n').map(row => row.split('\t'));
+        if (rows.length < 2) return []; // Need at least header + one row
+
+        const headers = rows[0].map(h => h.trim());
+        const result = [];
+
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (row.length === 0 || row.every(cell => !cell.trim())) continue;
+
+          const rowData = {};
+          for (let j = 0; j < headers.length && j < row.length; j++) {
+            rowData[headers[j]] = row[j] || '';
+          }
+          result.push(rowData);
+        }
+
+        return result;
+      }
+
+      async function importTestCases(testCases) {
+        const results = { success: 0, failed: 0, foldersCreated: 0 };
+
+        // First pass: Ensure all folders exist
+        for (const testCase of testCases) {
+          if (testCase.folder && testCase.folder !== 'Uncategorized') {
+            const folderExists = allFolders.some(f =>
+              f.name.toLowerCase() === testCase.folder.toLowerCase()
+            );
+
+            if (!folderExists) {
+              try {
+                const response = await fetch('/api/folders', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: testCase.folder,
+                    parentId: null
+                  })
+                });
+
+                if (response.ok) {
+                  const newFolder = await response.json();
+                  allFolders.push(newFolder);
+                  results.foldersCreated++;
+                }
+              } catch (error) {
+                console.error('Folder creation error:', error);
+              }
+            }
+          }
+        }
+
+        // Second pass: Create test cases with proper folder mapping
+        for (const testCase of testCases) {
+          try {
+            let folderId = null;
+            const folderName = testCase.folder || 'Uncategorized';
+
+            // Find the folder with exact case match first, then case-insensitive
+            const folder = allFolders.find(f => f.name === folderName) ||
+              allFolders.find(f => f.name.toLowerCase() === folderName.toLowerCase());
+
+            if (folder) {
+              folderId = folder.id;
+            } else if (folderName !== 'Uncategorized') {
+              throw new Error(`Folder "${folderName}" not found`);
+            }
+
+            // Create the test case with properly formatted steps
+            const response = await fetch('/api/tests', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: testCase.title,
+                steps: testCase.steps.replace(/""/g, '"'), // Fix escaped quotes
+                expected: testCase.expected,
+                comments: testCase.comments,
+                folderId: folderId,
+                testStatus: 'Not Run',
+                createdBy: username,
+                testCaseId: generateUniqueId(),
+                createdDate: new Date().toISOString().slice(0, 19).replace('T', ' ')
+              })
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Failed to create test case');
+            }
+
+            results.success++;
+          } catch (error) {
+            results.failed++;
+            console.error('Error importing test case:', error);
+            showToast(`Failed to import test case "${testCase.title}": ${error.message}`, 'error', 5000);
+          }
+        }
+
+        // Force refresh all data
+        await Promise.all([
+          fetchFolders(),
+          fetchTests()
+        ]);
+
+        return results;
+      }
+
+      async function processImportedData() {
+        const excelData = document.getElementById('excelData').value.trim();
+        if (!excelData) {
+          showToast('Please paste Excel data first', 'error');
+          return;
+        }
+
+        try {
+          showLoading(true);
+
+          // Add debug logging
+          console.log('Raw input data:', excelData);
+
+          const parsedData = parseExcelDataWithMultiline(excelData);
+          console.log('Parsed data:', parsedData);
+
+          if (parsedData.length === 0) {
+            showToast('No valid test cases found in the data', 'error');
+            return;
+          }
+
+          const testCasesToImport = parsedData.map(row => ({
+            title: row['Title'] || '',
+            folder: row['Folder'] || '',
+            steps: row['Steps'] || '',
+            expected: row['Expected'] || '',
+            comments: row['Comments'] || ''
+          }));
+
+          console.log('Test cases to import:', testCasesToImport);
+
+          const importResults = await importTestCases(testCasesToImport);
+          console.log('Import results:', importResults);
+
+          showToast(`Successfully imported ${importResults.success} test cases. ${importResults.failed} failed. Created ${importResults.foldersCreated} new folders.`, 'success');
+          closeImportModal();
+
+        } catch (error) {
+          console.error('Full import error:', {
+            error: error,
+            stack: error.stack,
+            inputData: excelData
+          });
+          showToast('Failed to import test cases: ' + error.message, 'error', 10000); // Longer display
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      function parseExcelDataWithMultiline(data) {
+        const rows = [];
+        const lines = data.split(/\r?\n/); // Handle both Windows and Unix line endings
+        if (lines.length < 2) return [];
+
+        // Normalize headers
+        const headers = lines[0].split('\t').map(h => (h || '').trim().toLowerCase());
+
+        const titleIndex = headers.findIndex(h => h.includes('title'));
+        const folderIndex = headers.findIndex(h => h.includes('folder'));
+        const stepsIndex = headers.findIndex(h => h.includes('steps'));
+        const expectedIndex = headers.findIndex(h => h.includes('expected'));
+        const commentsIndex = headers.findIndex(h => h.includes('comments')); // may be -1
+
+        if (titleIndex === -1 || stepsIndex === -1) {
+          throw new Error('Missing required columns (Title, Steps)');
+        }
+
+        let currentRow = null;
+        let buffer = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          // Improved tab splitting that handles quoted fields
+          const cells = [];
+          let currentCell = '';
+          let inQuotes = false;
+          let quoteCount = 0;
+
+          for (let char of line) {
+            if (char === '"') {
+              quoteCount++;
+              inQuotes = !inQuotes;
+            } else if (char === '\t' && !inQuotes && quoteCount % 2 === 0) {
+              cells.push(currentCell);
+              currentCell = '';
+              quoteCount = 0;
+            } else {
+              currentCell += char;
+            }
+          }
+          cells.push(currentCell);
+
+          // Check if this is a new row (has title) or continuation
+          const hasTitle = cells[titleIndex]?.trim();
+
+          if (hasTitle) {
+            if (currentRow) rows.push(currentRow);
+
+            currentRow = {
+              'Title': cells[titleIndex]?.trim() || '',
+              'Folder': (folderIndex >= 0 && cells[folderIndex]) ? cells[folderIndex].trim() : '',
+              'Steps': (stepsIndex >= 0 && cells[stepsIndex]) ? cells[stepsIndex].trim() : '',
+              'Expected': (expectedIndex >= 0 && cells[expectedIndex]) ? cells[expectedIndex].trim() : '',
+              'Comments': (commentsIndex >= 0 && cells[commentsIndex]) ? cells[commentsIndex].trim() : ''
+            };
+          } else if (currentRow) {
+            // Handle multi-line cells
+            if (stepsIndex >= 0 && cells[stepsIndex]) {
+              currentRow['Steps'] = [currentRow['Steps'], cells[stepsIndex].trim()].filter(Boolean).join('\n');
+            }
+            if (expectedIndex >= 0 && cells[expectedIndex]) {
+              currentRow['Expected'] = [currentRow['Expected'], cells[expectedIndex].trim()].filter(Boolean).join('\n');
+            }
+            if (commentsIndex >= 0 && cells[commentsIndex]) {
+              currentRow['Comments'] = [currentRow['Comments'], cells[commentsIndex].trim()].filter(Boolean).join('\n');
+            }
+          }
+        }
+
+        if (currentRow) rows.push(currentRow);
+
+        return rows.filter(row => row['Title'] && row['Steps']);
+      }
+
+
+
+      // Add these to your existing DOM elements
+      const searchInput = document.getElementById('searchInput');
+      const statusFilter = document.getElementById('statusFilter');
+      const createdByFilter = document.getElementById('createdByFilter');
+      const dateFilter = document.getElementById('dateFilter');
+      const folderFilter = document.getElementById('folderFilter');
+      const clearFilters = document.getElementById('clearFilters');
+      const startDate = document.getElementById('startDate');
+      const endDate = document.getElementById('endDate');
+      const customDateRange = document.getElementById('customDateRange');
+      const filterToggle = document.getElementById('filterToggle');
+      const filtersPanel = document.getElementById('filtersPanel');
+      const aplyFilters = document.getElementById('aplyFilters');
+      const resetFilters = document.getElementById('resetFilters');
+      const statusCheckboxes = document.querySelectorAll('.filter-options input[type="checkbox"]');
+
+      // Report elements
+      const totalTestsCount = document.getElementById('totalTestsCount');
+      const passedTestsCount = document.getElementById('passedTestsCount');
+      const failedTestsCount = document.getElementById('failedTestsCount');
+      const notRunTestsCount = document.getElementById('notRunTestsCount');
+      const blockedTestsCount = document.getElementById('blockedTestsCount');
+
+      // Add to your existing state variables
+      let filteredTests = [];
+      let currentFilters = {
+        search: '',
+        status: [],
+        createdBy: [],
+        dateRange: null,
+        folders: []
+      };
+
+      // Update your setupSearchAndFilters function
+      function setupSearchAndFilters() {
+        // Toggle filters panel
+        filterToggle.addEventListener('click', () => {
+          filtersPanel.classList.toggle('active');
+        });
+
+        // Search input event (instant filtering)
+        searchInput.addEventListener('input', (e) => {
+          currentFilters.search = e.target.value.toLowerCase().trim();
+          applyFilters();
+        });
+
+        searchInput.addEventListener('search', () => {
+          currentFilters.search = '';
+          applyFilters();
+        });
+
+        // Apply filters button
+        aplyFilters.addEventListener('click', () => {
+          currentFilters.status = Array.from(statusCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+          currentFilters.createdBy = createdByFilter.value || '';
+
+          currentFilters.folders = folderFilter.value || '';
+
+          // Date filter
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          switch (dateFilter.value) {
+            case 'today':
+              currentFilters.dateRange = { start: new Date(today), end: new Date(today) };
+              break;
+            case 'week':
+              const day = today.getDay();
+              const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+              const weekStart = new Date(today.setDate(diff));
+              currentFilters.dateRange = { start: weekStart, end: new Date(today) };
+              break;
+            case 'month':
+              currentFilters.dateRange = {
+                start: new Date(today.getFullYear(), today.getMonth(), 1),
+                end: new Date(today.getFullYear(), today.getMonth() + 1, 0)
+              };
+              break;
+            default:
+              currentFilters.dateRange = null;
+          }
+
+          applyFilters();
+          filtersPanel.classList.remove('active');
+        });
+
+        // Reset filters
+        resetFilters.addEventListener('click', () => {
+          statusCheckboxes.forEach(cb => cb.checked = true);
+          createdByFilter.value = '';
+          dateFilter.value = '';
+          folderFilter.value = '';
+
+          currentFilters = {
+            search: '',
+            status: [],
+            createdBy: '',
+            dateRange: null,
+            folders: ''
+          };
+
+          searchInput.value = '';
+          applyFilters();
+        });
+      }
+
+      function updateCustomDateRange() {
+        if (startDate.value && endDate.value) {
+          currentFilters.dateRange = {
+            start: new Date(startDate.value),
+            end: new Date(endDate.value)
+          };
+          applyFilters();
+        }
+      }
+
+      // Update your applyFilters function
+      function applyFilters() {
+        filteredTests = allTestsData.filter(test => {
+        // Search filter - search ID and title separately
+        if (currentFilters.search) {
+          const searchLower = currentFilters.search.toLowerCase();
+          const idMatch = test.testCaseId?.toLowerCase().includes(searchLower) || false;
+          const titleMatch = test.title?.toLowerCase().includes(searchLower) || false;
+          if (!idMatch && !titleMatch) return false;
+        }
+
+          // Status filter
+          if (currentFilters.status.length > 0 && !currentFilters.status.includes(test.testStatus || 'Not Run')) {
+            return false;
+          }
+
+          // Created by filter
+          if (currentFilters.createdBy && test.createdBy !== currentFilters.createdBy) {
+            return false;
+          }
+
+          // Date filter
+          if (currentFilters.dateRange) {
+            const testDate = test.createdDate ? new Date(test.createdDate) : new Date(0);
+            if (testDate < currentFilters.dateRange.start || testDate > currentFilters.dateRange.end) {
+              return false;
+            }
+          }
+
+          // Folder filter
+          if (currentFilters.folders) {
+            const folderId = test.folder ? test.folder.id : null;
+            if (folderId !== currentFilters.folders) {
+              return false;
+            }
+          }
+
+          return true;
+        });
+
+        currentPage = 1;
+        renderTestsForPage();
+        updatePaginationControls();
+        updateReport();
+      }
+
+      // New function to update the report visualization
+      function updateReport() {
+        const counts = {
+          total: filteredTests.length,
+          passed: 0,
+          failed: 0,
+          notRun: 0,
+          blocked: 0
+        };
+
+        filteredTests.forEach(test => {
+          const status = test.testStatus || 'Not Run';
+          switch (status) {
+            case 'Pass': counts.passed++; break;
+            case 'Fail': counts.failed++; break;
+            case 'Blocked': counts.blocked++; break;
+            default: counts.notRun++; break;
+          }
+        });
+
+        totalTestsCount.textContent = counts.total;
+        passedTestsCount.textContent = counts.passed;
+        failedTestsCount.textContent = counts.failed;
+        notRunTestsCount.textContent = counts.notRun;
+        blockedTestsCount.textContent = counts.blocked;
+      }
+
+      // Update your populateFilterOptions function
+      function populateFilterOptions() {
+        // Created by filter
+        const createdByOptions = [...new Set(allTestsData.map(test => test.createdBy || username))];
+        createdByFilter.innerHTML = '<option value="">All Users</option>' +
+          createdByOptions.map(user => `<option value="${user}">${user}</option>`).join('');
+
+        // Folder filter
+        const folderOptions = allFolders.map(folder =>
+          `<option value="${folder.id}">${folder.name}</option>`
+        ).join('');
+        folderFilter.innerHTML = '<option value="">All Folders</option>' + folderOptions;
+      }
+
+      // Update your renderTestsForPage function to use filteredTests
+      function renderTestsForPage() {
+        testTable.innerHTML = '';
+
+        const startIndex = (currentPage - 1) * TESTS_PER_PAGE;
+        const endIndex = Math.min(startIndex + TESTS_PER_PAGE, filteredTests.length);
+        const testsToDisplay = filteredTests.slice(startIndex, endIndex);
+
+        if (testsToDisplay.length === 0) {
+          showEmptyState();
+          return;
+        }
+
+        testsToDisplay.forEach(test => {
+          const row = createTestRow(test);
+          testTable.appendChild(row);
+        });
+
+        setupRowEventHandlers();
+      }
+
+      // Update your updatePaginationControls to use filteredTests
+      function updatePaginationControls() {
+        const totalPages = Math.ceil(filteredTests.length / TESTS_PER_PAGE);
+
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages || filteredTests.length === 0;
+      }
+
+      function setupFolderSearch() {
+  const folderSearch = document.getElementById('folderSearch');
+  
+  folderSearch.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const folderItems = document.querySelectorAll('.folder-item');
+    
+    folderItems.forEach(item => {
+      const folderName = item.querySelector('span').textContent.toLowerCase();
+      if (folderName.includes(searchTerm)) {
+        item.style.display = '';
+        // Ensure parent folders are visible
+        let parent = item.parentElement.closest('.folder-item');
+        while (parent) {
+          parent.style.display = '';
+          parent = parent.parentElement.closest('.folder-item');
+        }
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  });
+}
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 2.5rem 3rem;
+      border-radius: 12px;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+      width: 320px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      color: #4a4a4a;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    input[type="text"],
+    input[type="password"] {
+      padding: 0.9rem 1.2rem;
+      font-size: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 8px rgba(102, 126, 234, 0.6);
+      outline: none;
+    }
+    button {
+      padding: 0.9rem 1.2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.5);
+    }
+    button:hover {
+      background: #5563c1;
+    }
+    p {
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    a:hover {
+      color: #5563c1;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main" aria-label="Login Form">
+    <h2>Login</h2>
+    <form id="loginForm" autocomplete="off" novalidate>
+      <input type="text" name="username" placeholder="Username" required aria-label="Username" />
+      <input type="password" name="password" placeholder="Password" required aria-label="Password" />
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="register.html">Register</a></p>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  
+  const username = event.target.username.value.trim();
+  const password = event.target.password.value;
+  const submitBtn = event.target.querySelector('button[type="submit"]');
+  
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Logging in...';
+  
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Login failed');
+    }
+
+    // Store username in localStorage upon successful login
+    localStorage.setItem('username', username);
+
+    // Redirect on success
+    window.location.href = data.redirect || '/module.html';
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    alert(error.message || 'Login failed. Please try again.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Login';
+  }
+});
+  </script>
+</body>
+</html>
