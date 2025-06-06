@@ -131,7 +131,7 @@ router.get('/folders', async (req, res) => {
       ORDER BY f.name ASC
       `);
     
-    console.log('Query results:', results); // Add this
+    // console.log('Query results:', results); // Add this
     res.json(results);
   } catch (err) {
     console.error('Fetch folders error:', err);

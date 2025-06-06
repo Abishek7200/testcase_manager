@@ -39,28 +39,30 @@
     </form>
 
     <ul class="folder-list" id="folderList">
-      <li class="folder-item" id="allTestsItem">
-        <a href="#" data-folder-id="all">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <span>All Test Cases</span>
-          <span class="folder-count" id="allTestsCount">0</span>
-        </a>
+      <li class="folder-item active" id="allTestsItem">
+        <div class="folder-content">
+          <a href="#" data-folder-id="all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>All Test Cases</span>
+            <span class="folder-count" id="allTestsCount">0</span>
+          </a>
+        </div>
       </li>
+      <!-- Folders will be dynamically inserted here -->
     </ul>
   </div>
 
   <div class="content">
     <div class="controls-container">
-      <!-- Search Bar -->
+      <h2 id="contentTitle">All Test Cases</h2>
+      <div class="content-header">
+        <!-- Search Bar -->
       <div class="search-container">
         <input type="search" id="searchInput" placeholder="Search by ID or Title..." autocomplete="off">
       </div>
-
-      <div class="content-header">
-        <h2 id="contentTitle">All Test Cases</h2>
         <div class="action-buttons">
           <button class="add-test-btn" id="addTestBtn">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -148,8 +150,8 @@
         </div>
       </div>
 
-       <!-- Report Visualization -->
-       <div class="test-report">
+      <!-- Report Visualization -->
+      <div class="test-report">
         <div class="report-card total-tests">
           <span class="report-count" id="totalTestsCount">0</span>
           <span class="report-label">Total Tests</span>
@@ -473,6 +475,7 @@
       }
 
       // Folder management
+      // Updated folder rendering function
       function renderFolders(folders) {
         allFolders = folders;
 
@@ -492,9 +495,26 @@
             const subfolderList = document.createElement('ul');
             subfolderList.className = 'folder-hierarchy';
             subfolders.forEach(subfolder => {
-              subfolderList.appendChild(createFolderItem(subfolder));
+              subfolderList.appendChild(createFolderItem(subfolder, true));
             });
             folderItem.appendChild(subfolderList);
+
+            // Add expand/collapse functionality
+            const expander = document.createElement('span');
+            expander.className = 'folder-expander';
+            expander.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          `;
+            folderItem.querySelector('.folder-content').prepend(expander);
+
+            expander.addEventListener('click', (e) => {
+              e.stopPropagation();
+              subfolderList.classList.toggle('collapsed');
+              expander.querySelector('svg').style.transform = subfolderList.classList.contains('collapsed') ?
+                'rotate(-90deg)' : 'rotate(0deg)';
+            });
           }
         });
 
@@ -502,37 +522,41 @@
         updateFolderDropdowns(folders);
 
         // Update "All Test Cases" count
-        allTestsCount.textContent = allTestsData.length;
+        // updateAllTestsCount();
       }
 
-      function createFolderItem(folder) {
+      function createFolderItem(folder, isSubfolder = false) {
         const folderItem = document.createElement('li');
-  folderItem.className = `folder-item ${currentFolderId === folder.id ? 'active' : ''}`;
-  
-  // Add indentation class if it's a subfolder
-  const indentClass = folder.parentId ? 'subfolder' : '';
-  
-  folderItem.innerHTML = `
-    <div class="folder-content ${indentClass}">
-      <a href="#" data-folder-id="${folder.id}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span>${escapeHtml(folder.name)}</span>
-        <span class="folder-count">${folder.testCaseCount || 0}</span>
-      </a>
-    </div>
-    <span class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        folderItem.className = `folder-item ${currentFolderId === folder.id ? 'active' : ''}`;
+
+        folderItem.innerHTML = `
+        <div class="folder-content ${isSubfolder ? 'subfolder' : ''}">
+          <a href="#" data-folder-id="${folder.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>${escapeHtml(folder.name)}</span>
+            <span class="folder-count">${folder.testCaseCount || 0}</span>
+          </a>
+        </div>
+        <button class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 6h18"></path>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
-      </span>
-  `;
+        </button>
+      `;
+
         // Add click handler for folder selection
         folderItem.querySelector('a').addEventListener('click', (e) => {
           e.preventDefault();
           filterTestsByFolder(folder.id);
+
+          // Update active state
+          document.querySelectorAll('.folder-item').forEach(item => {
+            item.classList.remove('active');
+          });
+          folderItem.classList.add('active');
         });
 
         // Add click handler for folder deletion
@@ -543,6 +567,10 @@
 
         return folderItem;
       }
+
+      // function updateAllTestsCount() {
+      //   allTestsCount.textContent = allTestsData.length;
+      // }
 
       function updateFolderDropdowns(folders) {
         // Clear existing options (keep first option)
@@ -600,17 +628,17 @@
       // Test case management
       async function filterTestsByFolder(folderId) {
         currentFolderId = folderId;
-  
-  // Update active state in folder list
-  document.querySelectorAll('.folder-item').forEach(item => {
-    item.classList.remove('active');
-    const itemFolderId = item.querySelector('a')?.dataset.folderId;
-    if ((folderId === 'all' && item === allTestsItem)) {
-      item.classList.add('active');
-    } else if (folderId && itemFolderId === folderId) {
-      item.classList.add('active');
-    }
-  });
+
+        // Update active state in folder list
+        document.querySelectorAll('.folder-item').forEach(item => {
+          item.classList.remove('active');
+          const itemFolderId = item.querySelector('a')?.dataset.folderId;
+          if ((folderId === 'all' && item === allTestsItem)) {
+            item.classList.add('active');
+          } else if (folderId && itemFolderId === folderId) {
+            item.classList.add('active');
+          }
+        });
 
         // Update content title
         if (folderId === 'all') {
@@ -1675,13 +1703,13 @@
       // Update your applyFilters function
       function applyFilters() {
         filteredTests = allTestsData.filter(test => {
-        // Search filter - search ID and title separately
-        if (currentFilters.search) {
-          const searchLower = currentFilters.search.toLowerCase();
-          const idMatch = test.testCaseId?.toLowerCase().includes(searchLower) || false;
-          const titleMatch = test.title?.toLowerCase().includes(searchLower) || false;
-          if (!idMatch && !titleMatch) return false;
-        }
+          // Search filter - search ID and title separately
+          if (currentFilters.search) {
+            const searchLower = currentFilters.search.toLowerCase();
+            const idMatch = test.testCaseId?.toLowerCase().includes(searchLower) || false;
+            const titleMatch = test.title?.toLowerCase().includes(searchLower) || false;
+            if (!idMatch && !titleMatch) return false;
+          }
 
           // Status filter
           if (currentFilters.status.length > 0 && !currentFilters.status.includes(test.testStatus || 'Not Run')) {
@@ -1790,28 +1818,28 @@
       }
 
       function setupFolderSearch() {
-  const folderSearch = document.getElementById('folderSearch');
-  
-  folderSearch.addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const folderItems = document.querySelectorAll('.folder-item');
-    
-    folderItems.forEach(item => {
-      const folderName = item.querySelector('span').textContent.toLowerCase();
-      if (folderName.includes(searchTerm)) {
-        item.style.display = '';
-        // Ensure parent folders are visible
-        let parent = item.parentElement.closest('.folder-item');
-        while (parent) {
-          parent.style.display = '';
-          parent = parent.parentElement.closest('.folder-item');
-        }
-      } else {
-        item.style.display = 'none';
+        const folderSearch = document.getElementById('folderSearch');
+
+        folderSearch.addEventListener('input', (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const folderItems = document.querySelectorAll('.folder-item');
+
+          folderItems.forEach(item => {
+            const folderName = item.querySelector('span').textContent.toLowerCase();
+            if (folderName.includes(searchTerm)) {
+              item.style.display = '';
+              // Ensure parent folders are visible
+              let parent = item.parentElement.closest('.folder-item');
+              while (parent) {
+                parent.style.display = '';
+                parent = parent.parentElement.closest('.folder-item');
+              }
+            } else {
+              item.style.display = 'none';
+            }
+          });
+        });
       }
-    });
-  });
-}
 
     </script>
 </body>
