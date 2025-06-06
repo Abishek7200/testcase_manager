@@ -52,8 +52,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API routes
 app.use('/api', routes);
 
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+app.get('/module', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'module.html'));
+});
+
 // Start the server
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}/login`);
   console.log('✅ MySQL session store is configured and ready');
 });

@@ -574,7 +574,7 @@
           const response = await fetch(`/api/folders`);
 
           if (response.status === 401) {
-            window.location.href = 'login.html';
+            window.location.href = '/login';
             return;
           }
 
@@ -635,7 +635,7 @@
           const response = await fetch(url);
 
           if (response.status === 401) {
-            window.location.href = 'login.html';
+            window.location.href = '/login';
             return;
           }
 
@@ -1186,7 +1186,7 @@
           // Remove username from localStorage
           localStorage.removeItem('username');
 
-          window.location.href = 'login.html';
+          window.location.href = '/login';
 
         } catch (error) {
           console.error('Logout error:', error);
@@ -1275,7 +1275,7 @@
         try {
           // Check authentication first
           if (!await checkAuthentication()) {
-            window.location.href = 'login.html';
+            window.location.href = '/login';
             return;
           }
 
@@ -1293,7 +1293,7 @@
         } catch (error) {
           console.error('Initialization error:', error);
           showToast('Failed to initialize application', 'error');
-          window.location.href = 'login.html';
+          window.location.href = '/login';
         }
       }
 

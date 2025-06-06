@@ -86,7 +86,7 @@ router.post('/login', async (req, res) => {
       }
       res.json({ 
         success: true, 
-        redirect: '/module.html',
+        redirect: '/module',
         user: { username: user.username }
       });
     });
