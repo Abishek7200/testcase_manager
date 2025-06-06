@@ -60,9 +60,9 @@
       <h2 id="contentTitle">All Test Cases</h2>
       <div class="content-header">
         <!-- Search Bar -->
-      <div class="search-container">
-        <input type="search" id="searchInput" placeholder="Search by ID or Title..." autocomplete="off">
-      </div>
+        <div class="search-container">
+          <input type="search" id="searchInput" placeholder="Search by ID or Title..." autocomplete="off">
+        </div>
         <div class="action-buttons">
           <button class="add-test-btn" id="addTestBtn">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -539,12 +539,12 @@
             <span class="folder-count">${folder.testCaseCount || 0}</span>
           </a>
         </div>
-        <button class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder">
+        <span class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder" style="color:red;">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 6h18"></path>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
-        </button>
+        </span>
       `;
 
         // Add click handler for folder selection
@@ -1230,11 +1230,13 @@
         return div.innerHTML;
       }
 
+      let currentCounter = 1;
+
       function generateUniqueId() {
         const prefix = 'TC';
-        const now = Date.now();
-        const random = Math.floor(Math.random() * 10000);
-        return `${prefix}${String(now + random).slice(-4)}`;
+        const id = String(currentCounter).padStart(4, '0'); // Pads with leading zeros
+        currentCounter++;
+        return `${prefix}${id}`;
       }
 
       function showToast(message, type = 'info') {
@@ -1466,7 +1468,7 @@
           // Add debug logging
           console.log('Raw input data:', excelData);
 
-          const parsedData = parseExcelDataWithMultiline(excelData);
+          const parsedData = await parseExcelDataWithMultiline(excelData);
           console.log('Parsed data:', parsedData);
 
           if (parsedData.length === 0) {
@@ -1502,81 +1504,116 @@
         }
       }
 
-      function parseExcelDataWithMultiline(data) {
-        const rows = [];
-        const lines = data.split(/\r?\n/); // Handle both Windows and Unix line endings
-        if (lines.length < 2) return [];
+      async function parseExcelDataWithMultiline(data) {
+        return new Promise((resolve, reject) => {
+          try {
+            // Process data asynchronously to avoid blocking the main thread
+            setTimeout(() => {
+              try {
+                const rows = [];
+                const lines = data.split(/\r?\n/); // Handle both Windows and Unix line endings
 
-        // Normalize headers
-        const headers = lines[0].split('\t').map(h => (h || '').trim().toLowerCase());
+                if (lines.length < 2) {
+                  return resolve([]);
+                }
 
-        const titleIndex = headers.findIndex(h => h.includes('title'));
-        const folderIndex = headers.findIndex(h => h.includes('folder'));
-        const stepsIndex = headers.findIndex(h => h.includes('steps'));
-        const expectedIndex = headers.findIndex(h => h.includes('expected'));
-        const commentsIndex = headers.findIndex(h => h.includes('comments')); // may be -1
+                const headerLine = lines.find(line => line.trim()); // First non-empty line
+                if (!headerLine) return resolve([]);
+                new Promise(resolve => setTimeout(resolve, 100));
+                const headers = headerLine.split('\t').map(h => (h || '').trim().toLowerCase());
 
-        if (titleIndex === -1 || stepsIndex === -1) {
-          throw new Error('Missing required columns (Title, Steps)');
-        }
+                const titleIndex = headers.findIndex(h => h.includes('title'));
+                const folderIndex = headers.findIndex(h => h.includes('folder'));
+                const stepsIndex = headers.findIndex(h => h.includes('steps'));
+                const expectedIndex = headers.findIndex(h => h.includes('expected'));
+                const commentsIndex = headers.findIndex(h => h.includes('comments')); // may be -1
 
-        let currentRow = null;
-        let buffer = [];
+                if (titleIndex === -1 || stepsIndex === -1) {
+                  throw new Error('Missing required columns (Title, Steps)');
+                }
 
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
+                let currentRow = null;
 
-          // Improved tab splitting that handles quoted fields
-          const cells = [];
-          let currentCell = '';
-          let inQuotes = false;
-          let quoteCount = 0;
+                // Process rows in chunks for better performance with large datasets
+                const processChunk = (start, end) => {
+                  for (let i = start; i < end; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
 
-          for (let char of line) {
-            if (char === '"') {
-              quoteCount++;
-              inQuotes = !inQuotes;
-            } else if (char === '\t' && !inQuotes && quoteCount % 2 === 0) {
-              cells.push(currentCell);
-              currentCell = '';
-              quoteCount = 0;
-            } else {
-              currentCell += char;
-            }
+                    // Improved tab splitting that handles quoted fields
+                    const cells = [];
+                    let currentCell = '';
+                    let inQuotes = false;
+                    let quoteCount = 0;
+
+                    for (let char of line) {
+                      if (char === '"') {
+                        quoteCount++;
+                        inQuotes = !inQuotes;
+                      } else if (char === '\t' && !inQuotes && quoteCount % 2 === 0) {
+                        cells.push(currentCell);
+                        currentCell = '';
+                        quoteCount = 0;
+                      } else {
+                        currentCell += char;
+                      }
+                    }
+                    cells.push(currentCell);
+
+                    // Check if this is a new row (has title) or continuation
+                    const hasTitle = cells[titleIndex]?.trim();
+
+                    if (hasTitle) {
+                      if (currentRow) rows.push(currentRow);
+
+                      currentRow = {
+                        'Title': cells[titleIndex]?.trim() || '',
+                        'Folder': (folderIndex >= 0 && cells[folderIndex]) ? cells[folderIndex].trim() : '',
+                        'Steps': (stepsIndex >= 0 && cells[stepsIndex]) ? cells[stepsIndex].trim() : '',
+                        'Expected': (expectedIndex >= 0 && cells[expectedIndex]) ? cells[expectedIndex].trim() : '',
+                        'Comments': (commentsIndex >= 0 && cells[commentsIndex]) ? cells[commentsIndex].trim() : ''
+                      };
+                    } else if (currentRow) {
+                      // Handle multi-line cells
+                      if (stepsIndex >= 0 && cells[stepsIndex]) {
+                        const cleanedSteps = cells[stepsIndex].replace(/[\r\n]+/g, ' ').trim();
+                        currentRow['Steps'] = [currentRow['Steps'], cleanedSteps].filter(Boolean).join(' ');
+                      }
+
+                      if (expectedIndex >= 0 && cells[expectedIndex]) {
+                        const cleanedExpected = cells[expectedIndex].replace(/[\r\n]+/g, ' ').trim();
+                        if (cleanedExpected) {
+                          currentRow['Expected'] = [currentRow['Expected'], cleanedExpected].filter(Boolean).join(' ');
+                        }
+                      }
+
+                      if (commentsIndex >= 0 && cells[commentsIndex]) {
+                        const cleanedComments = cells[commentsIndex].replace(/[\r\n]+/g, ' ').trim();
+                        if (cleanedComments) {
+                          currentRow['Comments'] = [currentRow['Comments'], cleanedComments].filter(Boolean).join(' ');
+                        }
+                      }
+                    }
+                  }
+                };
+
+                // Process in chunks to avoid blocking the main thread
+                const chunkSize = 1000;
+                for (let i = 1; i < lines.length; i += chunkSize) {
+                  processChunk(i, Math.min(i + chunkSize, lines.length));
+                }
+
+                if (currentRow) rows.push(currentRow);
+
+                resolve(rows.filter(row => row['Title'] && row['Steps']));
+              } catch (error) {
+                reject(error);
+              }
+            }, 0);
+          } catch (error) {
+            reject(error);
           }
-          cells.push(currentCell);
-
-          // Check if this is a new row (has title) or continuation
-          const hasTitle = cells[titleIndex]?.trim();
-
-          if (hasTitle) {
-            if (currentRow) rows.push(currentRow);
-
-            currentRow = {
-              'Title': cells[titleIndex]?.trim() || '',
-              'Folder': (folderIndex >= 0 && cells[folderIndex]) ? cells[folderIndex].trim() : '',
-              'Steps': (stepsIndex >= 0 && cells[stepsIndex]) ? cells[stepsIndex].trim() : '',
-              'Expected': (expectedIndex >= 0 && cells[expectedIndex]) ? cells[expectedIndex].trim() : '',
-              'Comments': (commentsIndex >= 0 && cells[commentsIndex]) ? cells[commentsIndex].trim() : ''
-            };
-          } else if (currentRow) {
-            // Handle multi-line cells
-            if (stepsIndex >= 0 && cells[stepsIndex]) {
-              currentRow['Steps'] = [currentRow['Steps'], cells[stepsIndex].trim()].filter(Boolean).join('\n');
-            }
-            if (expectedIndex >= 0 && cells[expectedIndex]) {
-              currentRow['Expected'] = [currentRow['Expected'], cells[expectedIndex].trim()].filter(Boolean).join('\n');
-            }
-            if (commentsIndex >= 0 && cells[commentsIndex]) {
-              currentRow['Comments'] = [currentRow['Comments'], cells[commentsIndex].trim()].filter(Boolean).join('\n');
-            }
-          }
-        }
-
-        if (currentRow) rows.push(currentRow);
-
-        return rows.filter(row => row['Title'] && row['Steps']);
+        });
       }
 
 

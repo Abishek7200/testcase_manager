@@ -1,0 +1,58 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Server",
+            "program": "${workspaceFolder}/server.js",
+            "skipFiles": ["<node_internals>/**"],
+            "outFiles": ["${workspaceFolder}/**/*.js"],
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development",
+                "PORT": "3000",
+                "DB_HOST": "localhost",
+                "DB_USER": "your_db_user",
+                "DB_PASSWORD": "your_db_password",
+                "DB_NAME": "your_db_name"
+            }
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Debug Client (HTML/JS)",
+            "url": "http://localhost:3000/module.html",
+            "webRoot": "${workspaceFolder}/public",
+            "breakOnLoad": true,
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./*": "${webRoot}/*"
+            },
+            "skipFiles": ["<node_internals>/**"],
+            "preLaunchTask": "npm: start"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Debug Login Page",
+            "url": "http://localhost:3000/login.html",
+            "webRoot": "${workspaceFolder}/public",
+            "sourceMaps": true
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Debug Dashboard",
+            "url": "http://localhost:3000/dashboard.html",
+            "webRoot": "${workspaceFolder}/public",
+            "sourceMaps": true
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Fullstack Debug",
+            "configurations": ["Launch Server", "Debug Client (HTML/JS)"]
+        }
+    ]
+}

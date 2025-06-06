@@ -128,7 +128,7 @@ select,
 textarea {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid var(--gray-light);
+    border: 1px solid #6b87a3;
     background-color: white;
 }
 
@@ -151,6 +151,7 @@ button {
 
 button:hover {
     background-color: var(--primary-dark);
+    color: white;
 }
 
 button.danger {
@@ -307,7 +308,7 @@ td {
 }
 
 th {
-    background-color: #f8f9fa;
+    background-color: #dfdfdf;
     font-weight: 600;
     color: var(--dark);
     position: sticky;
