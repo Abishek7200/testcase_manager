@@ -124,12 +124,11 @@ button {
 }
 
 input,
-select,
 textarea {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #6b87a3;
-    background-color: white;
+    background-color: #f2f2f2;
 }
 
 input:focus,
@@ -470,6 +469,9 @@ textarea {
 
 .ql-editor {
     padding: 12px 15px;
+    border: 1px solid #6b87a3;
+    background-color: #f2f2f2;
+    border-radius: var(--border-radius)8px;
 }
 
 .ql-editor ol,
@@ -910,16 +912,17 @@ select[multiple] option {
   /* Filters Panel */
   .filters-panel {
     display: none;
-    background: #fff;
-    padding: 15px;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-bottom: 15px;
-    border: 1px solid #eee;
   }
   
   .filters-panel.active {
-    display: block;
+    position: relative;
+    display: flex;
+    background-color: white;
+    z-index: 1;
+    padding: 15px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: -webkit-fill-available;
   }
   
   .filter-row {
@@ -1021,4 +1024,71 @@ select[multiple] option {
   .folder-item.active a {
     color: #1976d2;
     font-weight: 500;
+  }
+
+  .folder-hierarchy {
+    margin-left: 20px;
+    padding-left: 10px;
+    border-left: 1px solid #e0e0e0;
+  }
+  
+  .folder-content.subfolder {
+    padding-left: 15px;
+  }
+  
+  .column-visibility {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .column-visibility-btn {
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: 10px;
+  }
+  
+  .column-visibility-menu {
+    position: absolute;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    min-width: 200px;
+  }
+  
+  .column-visibility-menu label {
+    display: block;
+    padding: 5px 0;
+    cursor: pointer;
+  }
+  
+  .copy-selected-btn {
+    margin-left: 10px;
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .copy-selected-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .test-row-selector {
+    margin-right: 10px;
+  }
+  
+  .hidden-column {
+    display: none;
+  }
+
+  .column-status{
+    width: 12%;
+  }
+
+  .test-status-dropdown > option[value="Pass"] {
+    background-color: #e9f9e6;
   }

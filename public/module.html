@@ -22,20 +22,20 @@
       </button>
     </div>
     <div class="folder-search">
-      <input type="search" id="folderSearch" placeholder="Search folders..." autocomplete="off">
+      <input type="search" id="folderSearch" placeholder="Search modules..." autocomplete="off">
     </div>
     <form id="createFolderForm">
       <div class="form-group">
         <label for="folderName">New Folder</label>
-        <input type="text" id="folderName" name="folderName" placeholder="Enter folder name" required>
+        <input type="text" id="folderName" name="folderName" placeholder="Enter module name" required>
       </div>
       <div class="form-group">
-        <label for="parentFolder">Parent Folder</label>
+        <label for="parentFolder">Parent Module</label>
         <select id="parentFolder" name="parentId">
           <option value="">None (Top Level)</option>
         </select>
       </div>
-      <button type="submit">Create Folder</button>
+      <button type="submit">Create Module</button>
     </form>
 
     <ul class="folder-list" id="folderList">
@@ -58,6 +58,34 @@
   <div class="content">
     <div class="controls-container">
       <h2 id="contentTitle">All Test Cases</h2>
+
+
+
+
+      <!-- Report Visualization -->
+      <div class="test-report">
+        <div class="report-card total-tests">
+          <span class="report-count" id="totalTestsCount">0</span>
+          <span class="report-label">Total Tests</span>
+        </div>
+        <div class="report-card passed-tests">
+          <span class="report-count" id="passedTestsCount">0</span>
+          <span class="report-label">Passed</span>
+        </div>
+        <div class="report-card failed-tests">
+          <span class="report-count" id="failedTestsCount">0</span>
+          <span class="report-label">Failed</span>
+        </div>
+        <div class="report-card not-run-tests">
+          <span class="report-count" id="notRunTestsCount">0</span>
+          <span class="report-label">Not Run</span>
+        </div>
+        <div class="report-card blocked-tests">
+          <span class="report-count" id="blockedTestsCount">0</span>
+          <span class="report-label">Blocked</span>
+        </div>
+      </div>
+
       <div class="content-header">
         <!-- Search Bar -->
         <div class="search-container">
@@ -150,42 +178,50 @@
         </div>
       </div>
 
-      <!-- Report Visualization -->
-      <div class="test-report">
-        <div class="report-card total-tests">
-          <span class="report-count" id="totalTestsCount">0</span>
-          <span class="report-label">Total Tests</span>
+      <div style="display: flex;position: relative;justify-self: right;left: 78%;">
+        <div class="column-visibility">
+          <button class="column-visibility-btn add-test-btn" id="columnVisibilityBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Columns
+          </button>
+          <div class="column-visibility-menu" id="columnVisibilityMenu" style="display: none; gap: 40px;">
+            <label><input type="checkbox" name="visibleColumns" value="id" checked> ID</label>
+            <label><input type="checkbox" name="visibleColumns" value="title" checked> Title</label>
+            <label><input type="checkbox" name="visibleColumns" value="folder" checked> Folder</label>
+            <label><input type="checkbox" name="visibleColumns" value="steps" checked> Steps</label>
+            <label><input type="checkbox" name="visibleColumns" value="expected" checked> Expected Result</label>
+            <label><input type="checkbox" name="visibleColumns" value="createdOn"> Created On</label>
+            <label><input type="checkbox" name="visibleColumns" value="createdBy"> Created By</label>
+            <label><input type="checkbox" name="visibleColumns" value="status" checked> Status</label>
+            <label><input type="checkbox" name="visibleColumns" value="actions" checked> Actions</label>
+          </div>
         </div>
-        <div class="report-card passed-tests">
-          <span class="report-count" id="passedTestsCount">0</span>
-          <span class="report-label">Passed</span>
-        </div>
-        <div class="report-card failed-tests">
-          <span class="report-count" id="failedTestsCount">0</span>
-          <span class="report-label">Failed</span>
-        </div>
-        <div class="report-card not-run-tests">
-          <span class="report-count" id="notRunTestsCount">0</span>
-          <span class="report-label">Not Run</span>
-        </div>
-        <div class="report-card blocked-tests">
-          <span class="report-count" id="blockedTestsCount">0</span>
-          <span class="report-label">Blocked</span>
-        </div>
+        <button id="copySelectedBtn" class="column-visibility-btn copy-selected-btn" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Copy Selected
+        </button>
       </div>
-
       <table>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Folder</th>
-            <th>Steps</th>
-            <th>Expected Result</th>
-            <th>Created On</th>
-            <th>Created By</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th><input type="checkbox" id="selectAllTests"></th>
+            <th class="column-id">ID</th>
+            <th class="column-title">Title</th>
+            <th class="column-steps">Steps</th>
+            <th class="column-expected">Expected Result</th>
+            <th class="column-createdOn hidden-column">Created On</th>
+            <th class="column-createdBy hidden-column">Created By</th>
+            <th class="column-status">Status</th>
+            <th class="column-folder">Module</th>
+            <th class="column-actions">Actions</th>
           </tr>
         </thead>
         <tbody id="tests">
@@ -349,8 +385,13 @@
       const nextPageBtn = document.getElementById('nextPage');
       const allTestsCount = document.getElementById('allTestsCount');
       const allTestsItem = document.getElementById('allTestsItem');
+      const columnVisibilityBtn = document.getElementById('columnVisibilityBtn');
+      const columnVisibilityMenu = document.getElementById('columnVisibilityMenu');
+      const copySelectedBtn = document.getElementById('copySelectedBtn');
+      const selectAllTests = document.getElementById('selectAllTests');
 
       let username = localStorage.getItem('username');
+      let selectedTests = new Set();
 
       // State variables
       let currentFolderId = null;
@@ -472,10 +513,56 @@
           e.preventDefault();
           filterTestsByFolder('all');
         });
+
+        // Column visibility
+        columnVisibilityBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          columnVisibilityMenu.style.display = columnVisibilityMenu.style.display === 'none' ? 'flex' : 'none';
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!columnVisibilityMenu.contains(e.target) && e.target !== columnVisibilityBtn) {
+            columnVisibilityMenu.style.display = 'none';
+          }
+        });
+
+        // Column visibility checkboxes
+        document.querySelectorAll('#columnVisibilityMenu input[type="checkbox"]').forEach(checkbox => {
+          checkbox.addEventListener('change', (e) => {
+            const columnClass = `column-${e.target.value}`;
+            document.querySelectorAll(`.${columnClass}`).forEach(el => {
+              el.classList.toggle('hidden-column', !e.target.checked);
+            });
+          });
+        });
+
+        // Copy selected tests
+        copySelectedBtn.addEventListener('click', copySelectedTests);
+
+        // Update the select all functionality
+        selectAllTests.addEventListener('change', (e) => {
+          const checkboxes = document.querySelectorAll('.test-row-selector');
+          const rows = document.querySelectorAll('#tests tr');
+
+          checkboxes.forEach((checkbox, index) => {
+            checkbox.checked = e.target.checked;
+            const testId = checkbox.dataset.testId;
+
+            if (e.target.checked) {
+              selectedTests.add(testId);
+              if (rows[index]) rows[index].classList.add('selected-row');
+            } else {
+              selectedTests.delete(testId);
+              if (rows[index]) rows[index].classList.remove('selected-row');
+            }
+          });
+
+          updateCopySelectedButton();
+        });
       }
 
       // Folder management
-      // Updated folder rendering function
+      // Folder management
       function renderFolders(folders) {
         allFolders = folders;
 
@@ -503,10 +590,10 @@
             const expander = document.createElement('span');
             expander.className = 'folder-expander';
             expander.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          `;
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            `;
             folderItem.querySelector('.folder-content').prepend(expander);
 
             expander.addEventListener('click', (e) => {
@@ -520,9 +607,6 @@
 
         // Update folder dropdowns
         updateFolderDropdowns(folders);
-
-        // Update "All Test Cases" count
-        // updateAllTestsCount();
       }
 
       function createFolderItem(folder, isSubfolder = false) {
@@ -567,10 +651,6 @@
 
         return folderItem;
       }
-
-      // function updateAllTestsCount() {
-      //   allTestsCount.textContent = allTestsData.length;
-      // }
 
       function updateFolderDropdowns(folders) {
         // Clear existing options (keep first option)
@@ -673,7 +753,7 @@
 
           const tests = await response.json();
           allTestsData = tests;
-          filteredTests = [...allTestsData]; // Initialize filteredTests
+          filteredTests = [...allTestsData];
           totalTests = tests.length;
 
           renderTestsForPage();
@@ -698,8 +778,8 @@
         testTable.innerHTML = '';
 
         const startIndex = (currentPage - 1) * TESTS_PER_PAGE;
-        const endIndex = Math.min(startIndex + TESTS_PER_PAGE, allTestsData.length);
-        const testsToDisplay = allTestsData.slice(startIndex, endIndex);
+        const endIndex = Math.min(startIndex + TESTS_PER_PAGE, filteredTests.length);
+        const testsToDisplay = filteredTests.slice(startIndex, endIndex);
 
         if (testsToDisplay.length === 0) {
           showEmptyState();
@@ -716,19 +796,22 @@
 
       function createTestRow(test) {
         const row = document.createElement('tr');
+        row.dataset.id = test.id; // Add this line to store the test ID
         const createdDate = test.createdDate ? new Date(test.createdDate).toLocaleDateString() : 'N/A';
         const statusDropdown = createStatusDropdown(test);
+        const isSelected = selectedTests.has(test.id);
 
         row.innerHTML = `
-        <td>${test.testCaseId || 'N/A'}</td>
-        <td>${escapeHtml(test.title)}</td>
-        <td>${test.folder ? escapeHtml(test.folder.name) : 'Uncategorized'}</td>
-        <td class="test-steps">${test.steps || ''}</td>
-        <td class="test-steps">${test.expected || ''}</td>
-        <td>${createdDate}</td>
-        <td>${test.createdBy || username}</td>
-        <td>${statusDropdown}</td>
-        <td class="actions">
+        <td><input type="checkbox" class="test-row-selector" data-test-id="${test.id}" ${isSelected ? 'checked' : ''}></td>
+        <td class="column-id">${test.testCaseId || 'N/A'}</td>
+        <td class="column-title">${escapeHtml(test.title)}</td>
+        <td class="column-steps test-steps">${test.steps || ''}</td>
+        <td class="column-expected test-steps">${test.expected || ''}</td>
+        <td class="column-createdOn hidden-column">${createdDate}</td>
+        <td class="column-createdBy hidden-column">${test.createdBy || username}</td>
+        <td class="column-status">${statusDropdown}</td>
+        <td class="column-folder">${test.folder ? escapeHtml(test.folder.name) : 'Uncategorized'}</td>
+        <td class="column-actions actions">
           <button data-test-id="${test.id}" class="edit-test-btn" title="Edit Test Case">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -749,26 +832,38 @@
 
       function createStatusDropdown(test) {
         const statusOptions = ['Not Run', 'Pass', 'Fail', 'Blocked'];
-        const statusClasses = {
-          'Not Run': 'status-not-run',
-          'Pass': 'status-pass',
-          'Fail': 'status-fail',
-          'Blocked': 'status-blocked'
+        const statusColors = {
+          'Not Run': 'blue',
+          'Pass': 'green',
+          'Fail': 'red',
+          'Blocked': 'darkred'
         };
 
+        const currentColor = statusColors[test.testStatus] || 'black';
+
         return `
-        <select class="test-status-dropdown" data-test-id="${test.id}">
-          ${statusOptions.map(option =>
+    <select class="test-status-dropdown" data-test-id="${test.id}" style="color: ${currentColor}">
+      ${statusOptions.map(option =>
           `<option value="${option}" ${test.testStatus === option ? 'selected' : ''}>${option}</option>`
         ).join('')}
-        </select>
-      `;
+    </select>
+    `;
       }
 
       function setupRowEventHandlers() {
         // Status dropdown changes
         document.querySelectorAll('.test-status-dropdown').forEach(dropdown => {
           dropdown.addEventListener('change', async (event) => {
+            if (event.target.classList.contains('test-status-dropdown')) {
+              const status = event.target.value;
+              const colorMap = {
+                'Not Run': 'black',
+                'Pass': 'green',
+                'Fail': 'red',
+                'Blocked': 'darkred'
+              };
+              event.target.style.color = colorMap[status] || 'black';
+            }
             const testId = event.target.dataset.testId;
             const newStatus = event.target.value;
             await updateTestStatus(testId, newStatus);
@@ -801,6 +896,251 @@
             deleteTest(testId);
           });
         });
+
+        // Row selection checkboxes
+        document.querySelectorAll('.test-row-selector').forEach(checkbox => {
+          checkbox.addEventListener('change', (e) => {
+            const testId = e.target.dataset.testId;
+            const row = e.target.closest('tr');
+
+            if (e.target.checked) {
+              selectedTests.add(testId);
+              row.classList.add('selected-row');
+            } else {
+              selectedTests.delete(testId);
+              row.classList.remove('selected-row');
+              selectAllTests.checked = false;
+            }
+            updateCopySelectedButton();
+          });
+        });
+
+
+      }
+
+      function updateCopySelectedButton() {
+        copySelectedBtn.disabled = selectedTests.size === 0;
+      }
+
+
+      // Update the copySelectedTests function
+      function copySelectedTests() {
+        if (selectedTests.size === 0) return;
+
+        // Get the selected test data
+        const selectedTestData = allTestsData.filter(test => {
+          return selectedTests.has(test.id.toString()) ||
+            selectedTests.has(String(test.id)) ||
+            selectedTests.has(test.id);
+        });
+
+        if (selectedTestData.length === 0) {
+          showToast('No matching test cases found', 'error');
+          return;
+        }
+
+        // Get visible columns from checkboxes
+        const visibleColumns = Array.from(
+          document.querySelectorAll('#columnVisibilityMenu input[type="checkbox"]:checked')
+        ).map(cb => cb.value);
+
+        // Define column mapping with proper headers
+        const columnMapping = {
+          'id': { header: 'ID', getter: test => test.testCaseId || 'N/A' },
+          'title': { header: 'Title', getter: test => test.title || '' },
+          'folder': { header: 'Folder', getter: test => test.folder ? test.folder.name : 'Uncategorized' },
+          'steps': { header: 'Steps', getter: test => formatStepsForExport(test.steps || '') },
+          'expected': { header: 'Expected Result', getter: test => formatStepsForExport(test.expected || '') },
+          'createdOn': { header: 'Created On', getter: test => test.createdDate ? new Date(test.createdDate).toLocaleDateString() : 'N/A' },
+          'createdBy': { header: 'Created By', getter: test => test.createdBy || username },
+          'status': { header: 'Status', getter: test => test.testStatus || 'Not Run' }
+        };
+
+        // Filter visible columns based on available data
+        const visibleColumnsData = visibleColumns
+          .filter(col => columnMapping[col])
+          .map(col => columnMapping[col]);
+
+        // Create HTML table for rich formatting
+        const htmlTable = document.createElement('table');
+        htmlTable.style.border = '1px solid black';
+        htmlTable.style.borderCollapse = 'collapse';
+
+        // Create header row
+        const headerRow = htmlTable.insertRow();
+        visibleColumnsData.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col.header;
+          th.style.border = '1px solid black';
+          th.style.padding = '4px';
+          headerRow.appendChild(th);
+        });
+
+        // Add data rows
+        selectedTestData.forEach(test => {
+          const row = htmlTable.insertRow();
+          visibleColumnsData.forEach(col => {
+            const cell = row.insertCell();
+            cell.textContent = col.getter(test);
+            cell.style.border = '1px solid black';
+            cell.style.padding = '4px';
+          });
+        });
+
+        // Create both HTML and plain text versions
+        const htmlData = htmlTable.outerHTML;
+        const plainTextData = tableToPlainText(htmlTable);
+
+        // Create clipboard item with both formats
+        const clipboardItem = new ClipboardItem({
+          'text/html': new Blob([htmlData], { type: 'text/html' }),
+          'text/plain': new Blob([plainTextData], { type: 'text/plain' })
+        });
+
+        // Copy to clipboard
+        navigator.clipboard.write([clipboardItem])
+          .then(() => {
+            showToast(`${selectedTestData.length} test case(s) copied with table formatting`, 'success');
+          })
+          .catch(err => {
+            console.error('Failed to copy:', err);
+            // Fallback to plain text if HTML copy fails
+            navigator.clipboard.writeText(plainTextData)
+              .then(() => showToast('Copied as plain text table', 'info'))
+              .catch(() => showToast('Failed to copy test cases', 'error'));
+          });
+      }
+
+      // Helper function to convert HTML table to plain text with borders
+      function tableToPlainText(table) {
+        const rows = Array.from(table.querySelectorAll('tr'));
+
+        // First, split cell content into lines and calculate column widths
+        const columnWidths = [];
+        const tableData = rows.map(row => {
+          return Array.from(row.children).map((cell, colIndex) => {
+            const lines = cell.textContent.split('\n').map(line => line.trim());
+            const maxWidth = Math.max(...lines.map(l => l.length));
+            if (!columnWidths[colIndex] || maxWidth > columnWidths[colIndex]) {
+              columnWidths[colIndex] = maxWidth;
+            }
+            return lines;
+          });
+        });
+
+        // Now normalize each cell to have same number of lines per row
+        const normalizedRows = tableData.map(row => {
+          const maxLines = Math.max(...row.map(lines => lines.length));
+          return row.map((lines, colIndex) => {
+            const padded = [...lines];
+            while (padded.length < maxLines) {
+              padded.push('');
+            }
+            // Pad each line to the column width
+            return padded.map(line => line.padEnd(columnWidths[colIndex], ' '));
+          });
+        });
+
+        // Function to draw a row
+        function drawRow(lineSet) {
+          return '│ ' + lineSet.map((text, i) => text.padEnd(columnWidths[i], ' ')).join(' │ ') + ' │\n';
+        }
+
+        // Top border
+        let result = '+' + columnWidths.map(w => '─'.repeat(w + 2)).join('+') + '+\n';
+
+        // Rows
+        normalizedRows.forEach((row, rowIndex) => {
+          const numLines = row[0].length;
+          for (let i = 0; i < numLines; i++) {
+            const lineSet = row.map(cellLines => cellLines[i]);
+            result += drawRow(lineSet);
+          }
+
+          // Add border between rows
+          result += '+' + columnWidths.map(w => '─'.repeat(w + 2)).join('+') + '+\n';
+        });
+
+        return result;
+      }
+
+
+      // Helper function to format steps for export
+      function formatStepsForExport(html) {
+        if (!html) return '';
+
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // Replace <ol> with numbered list as plain text
+        temp.querySelectorAll('ol').forEach(ol => {
+          const lines = [];
+          ol.querySelectorAll('li').forEach((li, index) => {
+            lines.push(`${index + 1}. ${li.textContent.trim()}`);
+          });
+          const replacement = document.createTextNode(lines.join('\n'));
+          ol.replaceWith(replacement);
+        });
+
+        // Replace <ul> with bullet list as plain text
+        temp.querySelectorAll('ul').forEach(ul => {
+          const lines = [];
+          ul.querySelectorAll('li').forEach(li => {
+            lines.push(`• ${li.textContent.trim()}`);
+          });
+          const replacement = document.createTextNode(lines.join('\n'));
+          ul.replaceWith(replacement);
+        });
+
+        // Replace <br> with newline
+        temp.querySelectorAll('br').forEach(br => {
+          br.replaceWith(document.createTextNode('\n'));
+        });
+
+        // Add newline after block elements (p, div) if needed
+        temp.querySelectorAll('p, div').forEach(el => {
+          if (!el.textContent.endsWith('\n')) {
+            el.appendChild(document.createTextNode('\n'));
+          }
+        });
+
+        // Final cleanup: normalize text
+        return temp.textContent
+          .replace(/\r\n|\r/g, '\n')       // Normalize line endings
+          .replace(/[ \t]+\n/g, '\n')      // Trim trailing space
+          .replace(/\n{3,}/g, '\n\n')      // Collapse 3+ line breaks
+          .trim();
+      }
+
+
+
+
+      // Helper function to convert HTML to plain text
+      function htmlToText(html) {
+        if (!html) return '';
+
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // Handle lists
+        temp.querySelectorAll('ol, ul').forEach(list => {
+          const items = list.querySelectorAll('li');
+          items.forEach((item, index) => {
+            const prefix = list.tagName === 'OL' ? `${index + 1}. ` : '• ';
+            item.textContent = prefix + item.textContent;
+          });
+          list.replaceWith(...Array.from(list.childNodes));
+        });
+
+        // Convert line breaks
+        temp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+
+        // Convert paragraphs and divs
+        temp.querySelectorAll('p, div').forEach(el => {
+          el.innerHTML += '\n';
+        });
+
+        return temp.textContent.trim().replace(/\s+/g, ' ');
       }
 
       function showEmptyState() {
@@ -1655,7 +1995,13 @@
       function setupSearchAndFilters() {
         // Toggle filters panel
         filterToggle.addEventListener('click', () => {
-          filtersPanel.classList.toggle('active');
+          const isActive = filtersPanel.classList.toggle('active');
+
+          if (isActive) {
+            filterToggle.style.backgroundColor = '#757470';
+          } else {
+            filterToggle.style.backgroundColor = ''; // Reset to default
+          }
         });
 
         // Search input event (instant filtering)
@@ -1737,7 +2083,6 @@
         }
       }
 
-      // Update your applyFilters function
       function applyFilters() {
         filteredTests = allTestsData.filter(test => {
           // Search filter - search ID and title separately
