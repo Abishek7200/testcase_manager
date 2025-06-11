@@ -124,6 +124,7 @@ button {
 }
 
 input,
+.form-group > select[id="folderDropdown"],
 textarea {
     width: 100%;
     padding: 10px 12px;
@@ -350,7 +351,7 @@ tr:hover {
 
 .toast {
     position: fixed;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     padding: 12px 20px;
     border-radius: var(--border-radius);

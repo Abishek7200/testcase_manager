@@ -288,7 +288,7 @@
           </div>
 
           <div class="form-group">
-            <label for="folderId">Folder</label>
+            <label for="folderId">Module</label>
             <select id="folderDropdown" name="folderId" required>
               <option value="" disabled selected>Select a folder</option>
             </select>
@@ -1443,14 +1443,14 @@
             ...allTestsData.map(test => [
               test.testCaseId || '',
               test.title || '',
-              test.folder ? test.folder.name : 'Uncategorized',
               // Convert HTML to plain text but preserve line breaks and lists
               htmlToText(test.steps || ''),
               htmlToText(test.expected || ''),
               htmlToText(test.comments || ''),
               test.createdDate ? new Date(test.createdDate).toLocaleDateString() : '',
               test.createdBy || '',
-              test.testStatus || 'Not Run'
+              test.testStatus || 'Not Run',
+              test.folder ? test.folder.name : 'Uncategorized'
             ])
           ];
 
@@ -1653,6 +1653,7 @@
           setupEventListeners();
           setupSearchAndFilters();
           setupFolderSearch();
+          document.getElementById('resetFilters')?.click();
 
           // Fetch data
           await Promise.all([
@@ -2004,12 +2005,13 @@
           }
         });
 
-        // Search input event (instant filtering)
+       // Search input event (instant filtering)
         searchInput.addEventListener('input', (e) => {
           currentFilters.search = e.target.value.toLowerCase().trim();
           applyFilters();
         });
 
+        // Remove this if it exists elsewhere
         searchInput.addEventListener('search', () => {
           currentFilters.search = '';
           applyFilters();
@@ -2084,49 +2086,49 @@
       }
 
       function applyFilters() {
-        filteredTests = allTestsData.filter(test => {
-          // Search filter - search ID and title separately
-          if (currentFilters.search) {
-            const searchLower = currentFilters.search.toLowerCase();
-            const idMatch = test.testCaseId?.toLowerCase().includes(searchLower) || false;
-            const titleMatch = test.title?.toLowerCase().includes(searchLower) || false;
-            if (!idMatch && !titleMatch) return false;
-          }
+  filteredTests = allTestsData.filter(test => {
+    // Search filter - search ID and title only
+    if (currentFilters.search) {
+      const searchLower = currentFilters.search.toLowerCase();
+      const idMatch = test.testCaseId?.toLowerCase().includes(searchLower) || false;
+      const titleMatch = test.title?.toLowerCase().includes(searchLower) || false;
+      if (!idMatch && !titleMatch) return false;
+    }
 
-          // Status filter
-          if (currentFilters.status.length > 0 && !currentFilters.status.includes(test.testStatus || 'Not Run')) {
-            return false;
-          }
+    // Status filter
+    if (currentFilters.status.length > 0 && !currentFilters.status.includes(test.testStatus || 'Not Run')) {
+      return false;
+    }
 
-          // Created by filter
-          if (currentFilters.createdBy && test.createdBy !== currentFilters.createdBy) {
-            return false;
-          }
+    // Created by filter
+    if (currentFilters.createdBy && test.createdBy !== currentFilters.createdBy) {
+      return false;
+    }
 
-          // Date filter
-          if (currentFilters.dateRange) {
-            const testDate = test.createdDate ? new Date(test.createdDate) : new Date(0);
-            if (testDate < currentFilters.dateRange.start || testDate > currentFilters.dateRange.end) {
-              return false;
-            }
-          }
-
-          // Folder filter
-          if (currentFilters.folders) {
-            const folderId = test.folder ? test.folder.id : null;
-            if (folderId !== currentFilters.folders) {
-              return false;
-            }
-          }
-
-          return true;
-        });
-
-        currentPage = 1;
-        renderTestsForPage();
-        updatePaginationControls();
-        updateReport();
+    // Date filter
+    if (currentFilters.dateRange) {
+      const testDate = test.createdDate ? new Date(test.createdDate) : new Date(0);
+      if (testDate < currentFilters.dateRange.start || testDate > currentFilters.dateRange.end) {
+        return false;
       }
+    }
+
+    // Folder filter
+    if (currentFilters.folders) {
+      const folderId = test.folder ? test.folder.id : null;
+      if (folderId !== currentFilters.folders) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  currentPage = 1;
+  renderTestsForPage();
+  updatePaginationControls();
+  updateReport();
+}
 
       // New function to update the report visualization
       function updateReport() {
