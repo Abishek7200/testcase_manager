@@ -13,7 +13,7 @@
 <body>
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h2>Test Manager</h2>
+      <h2>Testcase Manager v1.0</h2>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -26,7 +26,7 @@
     </div>
     <form id="createFolderForm">
       <div class="form-group">
-        <label for="folderName">New Folder</label>
+        <label for="folderName">New Module</label>
         <input type="text" id="folderName" name="folderName" placeholder="Enter module name" required>
       </div>
       <div class="form-group">
@@ -191,23 +191,23 @@
           <div class="column-visibility-menu" id="columnVisibilityMenu" style="display: none; gap: 40px;">
             <label><input type="checkbox" name="visibleColumns" value="id" checked> ID</label>
             <label><input type="checkbox" name="visibleColumns" value="title" checked> Title</label>
-            <label><input type="checkbox" name="visibleColumns" value="folder" checked> Folder</label>
             <label><input type="checkbox" name="visibleColumns" value="steps" checked> Steps</label>
             <label><input type="checkbox" name="visibleColumns" value="expected" checked> Expected Result</label>
             <label><input type="checkbox" name="visibleColumns" value="createdOn"> Created On</label>
             <label><input type="checkbox" name="visibleColumns" value="createdBy"> Created By</label>
             <label><input type="checkbox" name="visibleColumns" value="status" checked> Status</label>
+            <label><input type="checkbox" name="visibleColumns" value="folder" checked> Module</label>
             <label><input type="checkbox" name="visibleColumns" value="actions" checked> Actions</label>
           </div>
+          <button id="copySelectedBtn" class="column-visibility-btn copy-selected-btn" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy Selected
+          </button>
         </div>
-        <button id="copySelectedBtn" class="column-visibility-btn copy-selected-btn" disabled>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          Copy Selected
-        </button>
       </div>
       <table>
         <thead>
@@ -259,14 +259,14 @@
         <div class="import-instructions">
           <h4>How to import:</h4>
           <ol>
-            <li>Copy from Excel (columns: <strong>Title, Folder, Steps, Expected, Comments</strong>)</li>
+            <li>Copy from Excel (columns: <strong>Title, Module, Steps, Expected, Comments</strong>)</li>
             <li>Paste in the box above</li>
             <li>Other fields (ID, Status, etc.) will be auto-generated</li>
           </ol>
           <div class="example">
             <strong>Example:</strong>
             <pre>
-      Title           Folder      Steps                          Expected              Comments
+      Title           Module      Steps                          Expected              Comments
       Login Test      Auth        1. Go to login page            Should see dashboard  Test account
                                   2. Enter credentials
                                   3. Click submit</pre>
@@ -948,18 +948,19 @@
         const columnMapping = {
           'id': { header: 'ID', getter: test => test.testCaseId || 'N/A' },
           'title': { header: 'Title', getter: test => test.title || '' },
-          'folder': { header: 'Folder', getter: test => test.folder ? test.folder.name : 'Uncategorized' },
           'steps': { header: 'Steps', getter: test => formatStepsForExport(test.steps || '') },
           'expected': { header: 'Expected Result', getter: test => formatStepsForExport(test.expected || '') },
           'createdOn': { header: 'Created On', getter: test => test.createdDate ? new Date(test.createdDate).toLocaleDateString() : 'N/A' },
           'createdBy': { header: 'Created By', getter: test => test.createdBy || username },
-          'status': { header: 'Status', getter: test => test.testStatus || 'Not Run' }
+          'status': { header: 'Status', getter: test => test.testStatus || 'Not Run' },
+          'folder': { header: 'Module', getter: test => test.folder ? test.folder.name : 'Uncategorized' },
         };
 
         // Filter visible columns based on available data
         const visibleColumnsData = visibleColumns
           .filter(col => columnMapping[col])
-          .map(col => columnMapping[col]);
+          .map(col => columnMapping[col])
+          .filter(col => col.header !== 'Module');
 
         // Create HTML table for rich formatting
         const htmlTable = document.createElement('table');
@@ -1431,13 +1432,13 @@
             [
               'Test Case ID',
               'Title',
-              'Folder',
               'Steps',
               'Expected Result',
               'Comments',
               'Created On',
               'Created By',
-              'Status'
+              'Status',
+              'Module'
             ],
             // Data rows
             ...allTestsData.map(test => [
@@ -1474,8 +1475,20 @@
           // Add worksheet to workbook
           XLSX.utils.book_append_sheet(wb, ws, "Test Cases");
 
+          let folderName = 'All';
+
+          if (currentFolderId !== 'all' && currentFolderId) {
+            const folder = allFolders.find(f => f.id === currentFolderId);
+            folderName = folder ? folder.name : currentFolderId;
+          }
+
+          // Sanitize folder name to avoid invalid characters in filename
+          folderName = folderName.replace(/[<>:"/\\|?*]+/g, '_');
+
+          const fileName = `TestCases_${folderName}.xlsx`;
+
           // Generate filename
-          const fileName = `TestCases_${currentFolderId === 'all' ? 'All' : currentFolderId || 'All'}.xlsx`;
+          // const fileName = `TestCases_${currentFolderId === 'all' ? 'All' : currentFolderId || 'All'}.xlsx`;
 
           // Export to Excel
           XLSX.writeFile(wb, fileName);
@@ -2005,7 +2018,7 @@
           }
         });
 
-       // Search input event (instant filtering)
+        // Search input event (instant filtering)
         searchInput.addEventListener('input', (e) => {
           currentFilters.search = e.target.value.toLowerCase().trim();
           applyFilters();
@@ -2086,49 +2099,49 @@
       }
 
       function applyFilters() {
-  filteredTests = allTestsData.filter(test => {
-    // Search filter - search ID and title only
-    if (currentFilters.search) {
-      const searchLower = currentFilters.search.toLowerCase();
-      const idMatch = test.testCaseId?.toLowerCase().includes(searchLower) || false;
-      const titleMatch = test.title?.toLowerCase().includes(searchLower) || false;
-      if (!idMatch && !titleMatch) return false;
-    }
+        filteredTests = allTestsData.filter(test => {
+          // Search filter - search ID and title only
+          if (currentFilters.search) {
+            const searchLower = currentFilters.search.toLowerCase();
+            const idMatch = test.testCaseId?.toLowerCase().includes(searchLower) || false;
+            const titleMatch = test.title?.toLowerCase().includes(searchLower) || false;
+            if (!idMatch && !titleMatch) return false;
+          }
 
-    // Status filter
-    if (currentFilters.status.length > 0 && !currentFilters.status.includes(test.testStatus || 'Not Run')) {
-      return false;
-    }
+          // Status filter
+          if (currentFilters.status.length > 0 && !currentFilters.status.includes(test.testStatus || 'Not Run')) {
+            return false;
+          }
 
-    // Created by filter
-    if (currentFilters.createdBy && test.createdBy !== currentFilters.createdBy) {
-      return false;
-    }
+          // Created by filter
+          if (currentFilters.createdBy && test.createdBy !== currentFilters.createdBy) {
+            return false;
+          }
 
-    // Date filter
-    if (currentFilters.dateRange) {
-      const testDate = test.createdDate ? new Date(test.createdDate) : new Date(0);
-      if (testDate < currentFilters.dateRange.start || testDate > currentFilters.dateRange.end) {
-        return false;
+          // Date filter
+          if (currentFilters.dateRange) {
+            const testDate = test.createdDate ? new Date(test.createdDate) : new Date(0);
+            if (testDate < currentFilters.dateRange.start || testDate > currentFilters.dateRange.end) {
+              return false;
+            }
+          }
+
+          // Folder filter
+          if (currentFilters.folders) {
+            const folderId = test.folder ? test.folder.id : null;
+            if (folderId !== currentFilters.folders) {
+              return false;
+            }
+          }
+
+          return true;
+        });
+
+        currentPage = 1;
+        renderTestsForPage();
+        updatePaginationControls();
+        updateReport();
       }
-    }
-
-    // Folder filter
-    if (currentFilters.folders) {
-      const folderId = test.folder ? test.folder.id : null;
-      if (folderId !== currentFilters.folders) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  currentPage = 1;
-  renderTestsForPage();
-  updatePaginationControls();
-  updateReport();
-}
 
       // New function to update the report visualization
       function updateReport() {
