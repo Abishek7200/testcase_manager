@@ -178,7 +178,7 @@
         </div>
       </div>
 
-      <div style="display: flex;position: relative;justify-self: right;left: 78%;">
+      <div style="display: flex;position: relative;justify-self: right;left: 63%;">
         <div class="column-visibility">
           <button class="column-visibility-btn add-test-btn" id="columnVisibilityBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -206,6 +206,13 @@
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
             Copy Selected
+          </button>
+          <button id="deleteSelectedBtn" class="column-visibility-btn delete-selected-btn" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete Selected
           </button>
         </div>
       </div>
@@ -266,10 +273,10 @@
           <div class="example">
             <strong>Example:</strong>
             <pre>
-      Title           Module      Steps                          Expected              Comments
-      Login Test      Auth        1. Go to login page            Should see dashboard  Test account
-                                  2. Enter credentials
-                                  3. Click submit</pre>
+Title           Module      Steps                      Expected              Comments
+Login Test      Auth        1. Go to login page        Should see dashboard  Test account
+                            2. Enter credentials
+                            3. Click submit</pre>
           </div>
         </div>
       </div>
@@ -388,6 +395,7 @@
       const columnVisibilityBtn = document.getElementById('columnVisibilityBtn');
       const columnVisibilityMenu = document.getElementById('columnVisibilityMenu');
       const copySelectedBtn = document.getElementById('copySelectedBtn');
+      const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
       const selectAllTests = document.getElementById('selectAllTests');
 
       let username = localStorage.getItem('username');
@@ -920,6 +928,7 @@
 
       function updateCopySelectedButton() {
         copySelectedBtn.disabled = selectedTests.size === 0;
+        deleteSelectedBtn.disabled = selectedTests.size === 0;
       }
 
 
@@ -1722,92 +1731,108 @@
       }
 
       async function importTestCases(testCases) {
-        const results = { success: 0, failed: 0, foldersCreated: 0 };
+  const results = { success: 0, failed: 0, foldersCreated: 0 };
 
-        // First pass: Ensure all folders exist
-        for (const testCase of testCases) {
-          if (testCase.folder && testCase.folder !== 'Uncategorized') {
-            const folderExists = allFolders.some(f =>
-              f.name.toLowerCase() === testCase.folder.toLowerCase()
-            );
+  // First pass: Ensure all folders exist
+  for (const testCase of testCases) {
+    if (testCase.folder && testCase.folder.trim() !== '') {
+      const folderName = testCase.folder.trim();
 
-            if (!folderExists) {
-              try {
-                const response = await fetch('/api/folders', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    name: testCase.folder,
-                    parentId: null
-                  })
-                });
+      const folderExists = allFolders.some(async f => {
+        const [rows] = await connection.execute('SELECT name FROM folders WHERE id = ?', [f.folderId]);
+        const nameFromDB = rows[0]?.name;
+        return nameFromDB?.toLowerCase() === inputFolderName.toLowerCase();
+      });
 
-                if (response.ok) {
-                  const newFolder = await response.json();
-                  allFolders.push(newFolder);
-                  results.foldersCreated++;
-                }
-              } catch (error) {
-                console.error('Folder creation error:', error);
-              }
-            }
+      if (!folderExists) {
+        try {
+          const response = await fetch('/api/folders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: folderName,
+              parentId: null
+            })
+          });
+
+          if (response.ok) {
+            const newFolder = await response.json();
+            allFolders.push(newFolder);
+            results.foldersCreated++;
+            
+            // Update folder dropdowns
+            updateFolderDropdowns([...allFolders, newFolder]);
+          } else {
+            throw new Error(`Failed to create folder: ${folderName}`);
           }
+        } catch (error) {
+          console.error('Folder creation error:', error);
+          // Skip this test case if folder creation fails
+          continue;
         }
-
-        // Second pass: Create test cases with proper folder mapping
-        for (const testCase of testCases) {
-          try {
-            let folderId = null;
-            const folderName = testCase.folder || 'Uncategorized';
-
-            // Find the folder with exact case match first, then case-insensitive
-            const folder = allFolders.find(f => f.name === folderName) ||
-              allFolders.find(f => f.name.toLowerCase() === folderName.toLowerCase());
-
-            if (folder) {
-              folderId = folder.id;
-            } else if (folderName !== 'Uncategorized') {
-              throw new Error(`Folder "${folderName}" not found`);
-            }
-
-            // Create the test case with properly formatted steps
-            const response = await fetch('/api/tests', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                title: testCase.title,
-                steps: testCase.steps.replace(/""/g, '"'), // Fix escaped quotes
-                expected: testCase.expected,
-                comments: testCase.comments,
-                folderId: folderId,
-                testStatus: 'Not Run',
-                createdBy: username,
-                testCaseId: generateUniqueId(),
-                createdDate: new Date().toISOString().slice(0, 19).replace('T', ' ')
-              })
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Failed to create test case');
-            }
-
-            results.success++;
-          } catch (error) {
-            results.failed++;
-            console.error('Error importing test case:', error);
-            showToast(`Failed to import test case "${testCase.title}": ${error.message}`, 'error', 5000);
-          }
-        }
-
-        // Force refresh all data
-        await Promise.all([
-          fetchFolders(),
-          fetchTests()
-        ]);
-
-        return results;
       }
+    }
+  }
+
+  // Refresh folders list from server to ensure we have latest data
+  await fetchFolders();
+
+  // Second pass: Create test cases with proper folder mapping
+  for (const testCase of testCases) {
+    try {
+      let folderId = null;
+      const folderName = testCase.folder?.trim() || '';
+
+      if (folderName) {
+        // Find the folder (case-insensitive)
+        const folder = allFolders.find(f => 
+          f.name.toLowerCase() === folderName.toLowerCase()
+        );
+
+        if (!folder) {
+          throw new Error(`Folder "${folderName}" not found`);
+        }
+        folderId = folder.id;
+      }
+
+      // Create the test case
+      const response = await fetch('/api/tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: testCase.title,
+          steps: testCase.steps.replace(/""/g, '"'),
+          expected: testCase.expected,
+          comments: testCase.comments,
+          folderId: folderId,
+          testStatus: 'Not Run',
+          createdBy: username,
+          testCaseId: generateUniqueId(),
+          createdDate: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create test case');
+      }
+
+      results.success++;
+    } catch (error) {
+      results.failed++;
+      console.error('Error importing test case:', error);
+      showToast(`Failed to import test case "${testCase.title}": ${error.message}`, 'error', 5000);
+    }
+  }
+
+  // Refresh all data
+  await Promise.all([
+    fetchFolders(),
+    fetchTests()
+  ]);
+
+  return results;
+}
 
       async function processImportedData() {
         const excelData = document.getElementById('excelData').value.trim();
@@ -1821,7 +1846,7 @@
 
           // Add debug logging
           console.log('Raw input data:', excelData);
-
+          new Promise(resolve => setTimeout(resolve, 100));
           const parsedData = await parseExcelDataWithMultiline(excelData);
           console.log('Parsed data:', parsedData);
 
@@ -1832,14 +1857,14 @@
 
           const testCasesToImport = parsedData.map(row => ({
             title: row['Title'] || '',
-            folder: row['Folder'] || '',
+            folder: row['Module'] || '',
             steps: row['Steps'] || '',
             expected: row['Expected'] || '',
             comments: row['Comments'] || ''
           }));
 
           console.log('Test cases to import:', testCasesToImport);
-
+          new Promise(resolve => setTimeout(resolve, 100));
           const importResults = await importTestCases(testCasesToImport);
           console.log('Import results:', importResults);
 
@@ -1877,7 +1902,7 @@
                 const headers = headerLine.split('\t').map(h => (h || '').trim().toLowerCase());
 
                 const titleIndex = headers.findIndex(h => h.includes('title'));
-                const folderIndex = headers.findIndex(h => h.includes('folder'));
+                const folderIndex = headers.findIndex(h => h.includes('module'));
                 const stepsIndex = headers.findIndex(h => h.includes('steps'));
                 const expectedIndex = headers.findIndex(h => h.includes('expected'));
                 const commentsIndex = headers.findIndex(h => h.includes('comments')); // may be -1
@@ -1922,7 +1947,7 @@
 
                       currentRow = {
                         'Title': cells[titleIndex]?.trim() || '',
-                        'Folder': (folderIndex >= 0 && cells[folderIndex]) ? cells[folderIndex].trim() : '',
+                        'Module': (folderIndex >= 0 && cells[folderIndex]) ? cells[folderIndex].trim() : '',
                         'Steps': (stepsIndex >= 0 && cells[stepsIndex]) ? cells[stepsIndex].trim() : '',
                         'Expected': (expectedIndex >= 0 && cells[expectedIndex]) ? cells[expectedIndex].trim() : '',
                         'Comments': (commentsIndex >= 0 && cells[commentsIndex]) ? cells[commentsIndex].trim() : ''
@@ -2238,6 +2263,54 @@
         });
       }
 
+// Add event listener for delete selected button
+deleteSelectedBtn.addEventListener('click', deleteSelectedTests);
+
+// Function to delete selected tests
+async function deleteSelectedTests() {
+  if (selectedTests.size === 0) return;
+  
+  if (!confirm(`Are you sure you want to delete ${selectedTests.size} selected test case(s)? This action cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    showLoading(true);
+    
+    // Convert selectedTests Set to array
+    const testIds = Array.from(selectedTests);
+  
+    console.log(testIds);
+    
+    const response = await fetch('/api/selectedtests/batch', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ testIds })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete test cases');
+    }
+
+    // Clear selection
+    selectedTests.clear();
+    selectAllTests.checked = false;
+    
+    // Update UI
+    document.querySelectorAll('.test-row-selector').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#tests tr').forEach(row => row.classList.remove('selected-row'));
+    
+    await fetchTests();
+    showToast(`Successfully deleted ${testIds.length} test case(s)`, 'success');
+    
+  } catch (error) {
+    console.error('Error deleting tests:', error);
+    showToast(`Failed to delete test cases: ${error.message}`, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
     </script>
 </body>
 

@@ -284,4 +284,30 @@ router.delete('/tests/:testId', async (req, res) => {
   }
 });
 
+// Add this new route for batch deletion
+router.delete('/selectedtests/batch', async (req, res) => {
+  try {
+    const { testIds } = req.body;
+    
+    if (!testIds || !Array.isArray(testIds)) {
+      return res.status(400).json({ success: false, error: 'Invalid test IDs provided' });
+    }
+
+    if (testIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'No test IDs provided' });
+    }
+
+    // Create a parameterized query with the correct number of placeholders
+    // const placeholders = testIds.map(() => '?').join(',');
+    const query = `DELETE FROM tests WHERE id IN (${testIds})`;
+    
+    await db.query(query, testIds);
+    
+    res.json({ success: true, deletedCount: testIds.length });
+  } catch (err) {
+    console.error('Batch delete test cases error:', err);
+    res.status(500).json({ success: false, error: 'Batch delete failed' });
+  }
+});
+
 module.exports = router;

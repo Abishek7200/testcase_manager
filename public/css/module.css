@@ -489,7 +489,7 @@ textarea {
 
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: 100px 20px;
     color: var(--gray);
 }
 
@@ -1086,4 +1086,19 @@ select[multiple] option {
 
   .test-status-dropdown > option[value="Pass"] {
     background-color: #e9f9e6;
+  }
+
+  .delete-selected-btn {
+    background-color: #ff4444;
+    color: white;
+    margin-left: 10px;
+  }
+  
+  .delete-selected-btn:hover {
+    background-color: #cc0000;
+  }
+  
+  .delete-selected-btn:disabled {
+    background-color: #ff9999;
+    cursor: not-allowed;
   }

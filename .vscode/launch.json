@@ -13,9 +13,9 @@
                 "NODE_ENV": "development",
                 "PORT": "3000",
                 "DB_HOST": "localhost",
-                "DB_USER": "your_db_user",
-                "DB_PASSWORD": "your_db_password",
-                "DB_NAME": "your_db_name"
+                "DB_USER": "root",
+                "DB_PASSWORD": "Abishek7",
+                "DB_NAME": "testmgmt"
             }
         },
         {
@@ -24,7 +24,7 @@
             "name": "Debug Client (HTML/JS)",
             "url": "http://localhost:3000/module.html",
             "webRoot": "${workspaceFolder}/public",
-            "breakOnLoad": true,
+            // "breakOnLoad": true,
             "sourceMaps": true,
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${webRoot}/*"
@@ -35,8 +35,8 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Debug Login Page",
-            "url": "http://localhost:3000/login.html",
+            "name": "Debug Routes.js",
+            "url": "http://localhost:3000/module.html",
             "webRoot": "${workspaceFolder}/public",
             "sourceMaps": true
         },
