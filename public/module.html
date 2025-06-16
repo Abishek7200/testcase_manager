@@ -1283,7 +1283,6 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
             throw new Error('Please select a folder');
           }
 
-          body.testCaseId = generateUniqueId();
           body.createdDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
           body.createdBy = username;
 
@@ -1592,14 +1591,17 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
         return div.innerHTML;
       }
 
-      let currentCounter = 1;
+      // async function generateUniqueId(db) {
+      //   const [rows] = await db.query(`
+      //     SELECT MAX(CAST(SUBSTRING(test_case_id, 3) AS UNSIGNED)) AS maxId FROM tests
+      //   `);
 
-      function generateUniqueId() {
-        const prefix = 'TC';
-        const id = String(currentCounter).padStart(4, '0'); // Pads with leading zeros
-        currentCounter++;
-        return `${prefix}${id}`;
-      }
+      //   const maxId = rows[0].maxId || 0; // default to 0 if no records yet
+      //   const newId = maxId + 1;
+
+      //   return 'TC' + String(newId).padStart(4, '0');
+      // }
+
 
       function showToast(message, type = 'info') {
         const toast = document.createElement('div');
@@ -1807,7 +1809,6 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
           folderId: folderId,
           testStatus: 'Not Run',
           createdBy: username,
-          testCaseId: generateUniqueId(),
           createdDate: new Date().toISOString().slice(0, 19).replace('T', ' ')
         })
       });

@@ -221,18 +221,26 @@ router.get('/tests', async (req, res) => {
 
 router.post('/tests', async (req, res) => {
   try {
-    const { title, steps, expected, comments, folderId, testCaseId, createdDate, createdBy } = req.body;
-    
+    const { title, steps, expected, comments, folderId, createdDate, createdBy } = req.body;
+
+    // Generate new test_case_id from DB
+    const [rows] = await db.query(`
+      SELECT MAX(CAST(SUBSTRING(test_case_id, 3) AS UNSIGNED)) AS maxId FROM tests
+    `);
+    const maxId = rows[0].maxId || 0;
+    const newTestCaseId = 'TC' + String(maxId + 1).padStart(4, '0');
+
+    // Insert into DB
     const [result] = await db.query(`
       INSERT INTO tests 
       (title, steps, expected, comments, folder_id, test_case_id, created_date, created_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [title, steps, expected, comments, folderId || null, testCaseId, createdDate, createdBy]);
+    `, [title, steps, expected, comments, folderId || null, newTestCaseId, createdDate, createdBy]);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       id: result.insertId,
-      testCaseId,
+      testCaseId: newTestCaseId,
       createdDate,
       createdBy
     });
@@ -241,6 +249,7 @@ router.post('/tests', async (req, res) => {
     res.status(500).json({ success: false, error: 'Create test failed.' });
   }
 });
+
 
 router.put('/tests', async (req, res) => {
   try {
