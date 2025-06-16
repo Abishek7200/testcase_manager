@@ -7,7 +7,7 @@ const db = require('./db');
 const routes = require('./routes');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 
 // MySQL session store configuration
 const sessionStore = new MySQLStore({
