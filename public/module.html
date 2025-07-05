@@ -8,6 +8,102 @@
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="./css/module.css">
+  <style>
+    /* Updated CSS for tree-like folder structure */
+    .folder-list {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .folder-item {
+      margin: 5px 0;
+    }
+
+    .folder-content {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .folder-content:hover {
+      background-color: #f0f0f0;
+    }
+
+    .folder-content.active {
+      background-color: #e3f2fd;
+      font-weight: 500;
+    }
+
+    /* Parent folder styling */
+    .folder-content.parent-folder {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    /* Subfolder styling with indentation */
+    .folder-content.subfolder {
+      margin-left: 20px;
+      font-size: 14px;
+      position: relative;
+    }
+
+    /* Vertical line to indicate hierarchy */
+    .folder-content.subfolder::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: -10px;
+      height: calc(100% + 10px);
+      width: 1px;
+      background-color: #ccc;
+    }
+
+    /* Horizontal connector for subfolders */
+    .folder-content.subfolder::after {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 50%;
+      width: 10px;
+      height: 1px;
+      background-color: #ccc;
+    }
+
+    .folder-hierarchy {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .folder-hierarchy.collapsed {
+      display: none;
+    }
+
+    .folder-expander {
+      cursor: pointer;
+      margin-right: 8px;
+      transition: transform 0.2s;
+    }
+
+    .folder-count {
+      margin-left: auto;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .delete-folder-btn {
+      margin-left: 8px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .folder-item:hover .delete-folder-btn {
+      display: inline-block;
+    }
+  </style>
 </head>
 
 <body>
@@ -208,7 +304,8 @@
             Copy Selected
           </button>
           <button id="deleteSelectedBtn" class="column-visibility-btn delete-selected-btn" disabled>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 6h18"></path>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
@@ -570,29 +667,28 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
       }
 
       // Folder management
-      // Folder management
       function renderFolders(folders) {
-        allFolders = folders;
+      allFolders = folders;
 
-        // Clear existing folders (except "All Test Cases")
-        const folderItems = folderList.querySelectorAll('.folder-item:not(#allTestsItem)');
-        folderItems.forEach(item => item.remove());
+      // Clear existing folders (except "All Test Cases")
+      const folderItems = folderList.querySelectorAll('.folder-item:not(#allTestsItem)');
+      folderItems.forEach(item => item.remove());
 
-        // Build folder hierarchy
-        const rootFolders = folders.filter(f => !f.parentId);
-        rootFolders.forEach(folder => {
-          const folderItem = createFolderItem(folder);
-          folderList.appendChild(folderItem);
+      // Helper function to build folder hierarchy recursively
+      function buildFolderTree(parentId = null, depth = 0) {
+        const filteredFolders = folders.filter(f => (parentId ? f.parentId === parentId : !f.parentId));
+        const ul = document.createElement('ul');
+        ul.className = 'folder-hierarchy';
+        if (depth > 0) ul.className += ' subfolder-hierarchy';
 
-          // Add subfolders if they exist
-          const subfolders = folders.filter(f => f.parentId === folder.id);
-          if (subfolders.length > 0) {
-            const subfolderList = document.createElement('ul');
-            subfolderList.className = 'folder-hierarchy';
-            subfolders.forEach(subfolder => {
-              subfolderList.appendChild(createFolderItem(subfolder, true));
-            });
-            folderItem.appendChild(subfolderList);
+        filteredFolders.forEach(folder => {
+          const folderItem = createFolderItem(folder, depth > 0);
+          ul.appendChild(folderItem);
+
+          // Recursively add subfolders
+          const subfolders = buildFolderTree(folder.id, depth + 1);
+          if (subfolders.children.length > 0) {
+            folderItem.appendChild(subfolders);
 
             // Add expand/collapse functionality
             const expander = document.createElement('span');
@@ -606,23 +702,30 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
 
             expander.addEventListener('click', (e) => {
               e.stopPropagation();
-              subfolderList.classList.toggle('collapsed');
-              expander.querySelector('svg').style.transform = subfolderList.classList.contains('collapsed') ?
+              subfolders.classList.toggle('collapsed');
+              expander.querySelector('svg').style.transform = subfolders.classList.contains('collapsed') ?
                 'rotate(-90deg)' : 'rotate(0deg)';
             });
           }
         });
 
-        // Update folder dropdowns
-        updateFolderDropdowns(folders);
+        return ul;
       }
 
-      function createFolderItem(folder, isSubfolder = false) {
-        const folderItem = document.createElement('li');
-        folderItem.className = `folder-item ${currentFolderId === folder.id ? 'active' : ''}`;
+      // Build and append the folder tree
+      const folderTree = buildFolderTree();
+      folderList.appendChild(folderTree);
 
-        folderItem.innerHTML = `
-        <div class="folder-content ${isSubfolder ? 'subfolder' : ''}">
+      // Update folder dropdowns
+      updateFolderDropdowns(folders);
+    }
+
+    function createFolderItem(folder, isSubfolder = false) {
+      const folderItem = document.createElement('li');
+      folderItem.className = `folder-item ${currentFolderId === folder.id ? 'active' : ''}`;
+
+      folderItem.innerHTML = `
+        <div class="folder-content ${isSubfolder ? 'subfolder' : 'parent-folder'}">
           <a href="#" data-folder-id="${folder.id}">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2z"></path>
@@ -630,35 +733,35 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
             <span>${escapeHtml(folder.name)}</span>
             <span class="folder-count">${folder.testCaseCount || 0}</span>
           </a>
+          <span class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder" style="color:red;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </span>
         </div>
-        <span class="delete-folder-btn" data-folder-id="${folder.id}" title="Delete Folder" style="color:red;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 6h18"></path>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </span>
       `;
 
-        // Add click handler for folder selection
-        folderItem.querySelector('a').addEventListener('click', (e) => {
-          e.preventDefault();
-          filterTestsByFolder(folder.id);
+      // Add click handler for folder selection
+      folderItem.querySelector('a').addEventListener('click', (e) => {
+        e.preventDefault();
+        filterTestsByFolder(folder.id);
 
-          // Update active state
-          document.querySelectorAll('.folder-item').forEach(item => {
-            item.classList.remove('active');
-          });
-          folderItem.classList.add('active');
+        // Update active state
+        document.querySelectorAll('.folder-item').forEach(item => {
+          item.classList.remove('active');
         });
+        folderItem.classList.add('active');
+      });
 
-        // Add click handler for folder deletion
-        folderItem.querySelector('.delete-folder-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          deleteFolder(folder.id);
-        });
+      // Add click handler for folder deletion
+      folderItem.querySelector('.delete-folder-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteFolder(folder.id);
+      });
 
-        return folderItem;
-      }
+      return folderItem;
+    }
 
       function updateFolderDropdowns(folders) {
         // Clear existing options (keep first option)
@@ -1733,107 +1836,107 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
       }
 
       async function importTestCases(testCases) {
-  const results = { success: 0, failed: 0, foldersCreated: 0 };
+        const results = { success: 0, failed: 0, foldersCreated: 0 };
 
-  // First pass: Ensure all folders exist
-  for (const testCase of testCases) {
-    if (testCase.folder && testCase.folder.trim() !== '') {
-      const folderName = testCase.folder.trim();
+        // First pass: Ensure all folders exist
+        for (const testCase of testCases) {
+          if (testCase.folder && testCase.folder.trim() !== '') {
+            const folderName = testCase.folder.trim();
 
-      const folderExists = allFolders.some(async f => {
-        const [rows] = await connection.execute('SELECT name FROM folders WHERE id = ?', [f.folderId]);
-        const nameFromDB = rows[0]?.name;
-        return nameFromDB?.toLowerCase() === inputFolderName.toLowerCase();
-      });
+            const folderExists = allFolders.some(async f => {
+              const [rows] = await connection.execute('SELECT name FROM folders WHERE id = ?', [f.folderId]);
+              const nameFromDB = rows[0]?.name;
+              return nameFromDB?.toLowerCase() === inputFolderName.toLowerCase();
+            });
 
-      if (!folderExists) {
-        try {
-          const response = await fetch('/api/folders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: folderName,
-              parentId: null
-            })
-          });
+            if (!folderExists) {
+              try {
+                const response = await fetch('/api/folders', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: folderName,
+                    parentId: null
+                  })
+                });
 
-          if (response.ok) {
-            const newFolder = await response.json();
-            allFolders.push(newFolder);
-            results.foldersCreated++;
-            
-            // Update folder dropdowns
-            updateFolderDropdowns([...allFolders, newFolder]);
-          } else {
-            throw new Error(`Failed to create folder: ${folderName}`);
+                if (response.ok) {
+                  const newFolder = await response.json();
+                  allFolders.push(newFolder);
+                  results.foldersCreated++;
+
+                  // Update folder dropdowns
+                  updateFolderDropdowns([...allFolders, newFolder]);
+                } else {
+                  throw new Error(`Failed to create folder: ${folderName}`);
+                }
+              } catch (error) {
+                console.error('Folder creation error:', error);
+                // Skip this test case if folder creation fails
+                continue;
+              }
+            }
           }
-        } catch (error) {
-          console.error('Folder creation error:', error);
-          // Skip this test case if folder creation fails
-          continue;
         }
-      }
-    }
-  }
 
-  // Refresh folders list from server to ensure we have latest data
-  await fetchFolders();
+        // Refresh folders list from server to ensure we have latest data
+        await fetchFolders();
 
-  // Second pass: Create test cases with proper folder mapping
-  for (const testCase of testCases) {
-    try {
-      let folderId = null;
-      const folderName = testCase.folder?.trim() || '';
+        // Second pass: Create test cases with proper folder mapping
+        for (const testCase of testCases) {
+          try {
+            let folderId = null;
+            const folderName = testCase.folder?.trim() || '';
 
-      if (folderName) {
-        // Find the folder (case-insensitive)
-        const folder = allFolders.find(f => 
-          f.name.toLowerCase() === folderName.toLowerCase()
-        );
+            if (folderName) {
+              // Find the folder (case-insensitive)
+              const folder = allFolders.find(f =>
+                f.name.toLowerCase() === folderName.toLowerCase()
+              );
 
-        if (!folder) {
-          throw new Error(`Folder "${folderName}" not found`);
+              if (!folder) {
+                throw new Error(`Folder "${folderName}" not found`);
+              }
+              folderId = folder.id;
+            }
+
+            // Create the test case
+            const response = await fetch('/api/tests', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: testCase.title,
+                steps: testCase.steps.replace(/""/g, '"'),
+                expected: testCase.expected,
+                comments: testCase.comments,
+                folderId: folderId,
+                testStatus: 'Not Run',
+                createdBy: username,
+                createdDate: new Date().toISOString().slice(0, 19).replace('T', ' ')
+              })
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Failed to create test case');
+            }
+
+            results.success++;
+          } catch (error) {
+            results.failed++;
+            console.error('Error importing test case:', error);
+            showToast(`Failed to import test case "${testCase.title}": ${error.message}`, 'error', 5000);
+          }
         }
-        folderId = folder.id;
+
+        // Refresh all data
+        await Promise.all([
+          fetchFolders(),
+          fetchTests()
+        ]);
+
+        return results;
       }
-
-      // Create the test case
-      const response = await fetch('/api/tests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: testCase.title,
-          steps: testCase.steps.replace(/""/g, '"'),
-          expected: testCase.expected,
-          comments: testCase.comments,
-          folderId: folderId,
-          testStatus: 'Not Run',
-          createdBy: username,
-          createdDate: new Date().toISOString().slice(0, 19).replace('T', ' ')
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create test case');
-      }
-
-      results.success++;
-    } catch (error) {
-      results.failed++;
-      console.error('Error importing test case:', error);
-      showToast(`Failed to import test case "${testCase.title}": ${error.message}`, 'error', 5000);
-    }
-  }
-
-  // Refresh all data
-  await Promise.all([
-    fetchFolders(),
-    fetchTests()
-  ]);
-
-  return results;
-}
 
       async function processImportedData() {
         const excelData = document.getElementById('excelData').value.trim();
@@ -2264,54 +2367,54 @@ Login Test      Auth        1. Go to login page        Should see dashboard  Tes
         });
       }
 
-// Add event listener for delete selected button
-deleteSelectedBtn.addEventListener('click', deleteSelectedTests);
+      // Add event listener for delete selected button
+      deleteSelectedBtn.addEventListener('click', deleteSelectedTests);
 
-// Function to delete selected tests
-async function deleteSelectedTests() {
-  if (selectedTests.size === 0) return;
-  
-  if (!confirm(`Are you sure you want to delete ${selectedTests.size} selected test case(s)? This action cannot be undone.`)) {
-    return;
-  }
+      // Function to delete selected tests
+      async function deleteSelectedTests() {
+        if (selectedTests.size === 0) return;
 
-  try {
-    showLoading(true);
-    
-    // Convert selectedTests Set to array
-    const testIds = Array.from(selectedTests);
-  
-    console.log(testIds);
-    
-    const response = await fetch('/api/selectedtests/batch', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ testIds })
-    });
+        if (!confirm(`Are you sure you want to delete ${selectedTests.size} selected test case(s)? This action cannot be undone.`)) {
+          return;
+        }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete test cases');
-    }
+        try {
+          showLoading(true);
 
-    // Clear selection
-    selectedTests.clear();
-    selectAllTests.checked = false;
-    
-    // Update UI
-    document.querySelectorAll('.test-row-selector').forEach(cb => cb.checked = false);
-    document.querySelectorAll('#tests tr').forEach(row => row.classList.remove('selected-row'));
-    
-    await fetchTests();
-    showToast(`Successfully deleted ${testIds.length} test case(s)`, 'success');
-    
-  } catch (error) {
-    console.error('Error deleting tests:', error);
-    showToast(`Failed to delete test cases: ${error.message}`, 'error');
-  } finally {
-    showLoading(false);
-  }
-}
+          // Convert selectedTests Set to array
+          const testIds = Array.from(selectedTests);
+
+          console.log(testIds);
+
+          const response = await fetch('/api/selectedtests/batch', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testIds })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete test cases');
+          }
+
+          // Clear selection
+          selectedTests.clear();
+          selectAllTests.checked = false;
+
+          // Update UI
+          document.querySelectorAll('.test-row-selector').forEach(cb => cb.checked = false);
+          document.querySelectorAll('#tests tr').forEach(row => row.classList.remove('selected-row'));
+
+          await fetchTests();
+          showToast(`Successfully deleted ${testIds.length} test case(s)`, 'success');
+
+        } catch (error) {
+          console.error('Error deleting tests:', error);
+          showToast(`Failed to delete test cases: ${error.message}`, 'error');
+        } finally {
+          showLoading(false);
+        }
+      }
     </script>
 </body>
 
