@@ -1079,6 +1079,11 @@ select[multiple] option {
     cursor: not-allowed;
   }
 
+  #bulkEditBtn:disabled {
+    background-color: #4361ee61;
+    cursor: not-allowed;
+  }
+
   .accordion {
     margin-bottom: 15px;
   }
@@ -1144,3 +1149,92 @@ select[multiple] option {
     background-color: #dc3545;
     color: white;
   }
+
+  .form-row-editors {
+    display: flex;
+    gap: 15px; /* Space between editors */
+  }
+  
+  /* Styling for each editor group in the row */
+  .form-group.editor-group {
+    flex: 1; /* Allows the editors to share space equally */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Styling for the toggle switch container */
+  .form-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+  .toggle-label {
+    margin-bottom: 0; /* Override default form-group label margin */
+    font-weight: 500;
+  }
+  
+  /* Standard CSS for a nice toggle switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+  }
+  input:checked + .slider {
+    background-color: #667eea;
+  }
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+  .slider.round {
+    border-radius: 34px;
+  }
+  .slider.round:before {
+    border-radius: 50%;
+  }
+  .bulk-edit-row {
+    display: inline-block;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.bulk-edit-row label {
+    font-weight: 500;
+    width: 80px; /* Aligns the inputs */
+}
+.bulk-edit-row select,
+.bulk-edit-row input[type="text"] {
+    flex: 1; /* Makes the inputs take up remaining space */
+}
+.bulk-edit-toggle {
+    transform: scale(1.2); /* Makes checkbox slightly larger */
+}

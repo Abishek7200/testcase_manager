@@ -301,7 +301,7 @@
         </div>
       </div>
 
-      <div style="display: flex;position: relative;justify-self: right;left: 63%;">
+      <div style="display: flex;position: relative;justify-self: right;left: 55%;">
         <div class="column-visibility">
           <button class="column-visibility-btn add-test-btn" id="columnVisibilityBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -343,6 +343,7 @@
             </svg>
             Delete Selected
           </button>
+          <button id="bulkEditBtn" class="column-visibility-btn" disabled>Bulk Edit</button>
         </div>
       </div>
       <table>
@@ -426,35 +427,49 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="preConditions">Pre-conditions</label>
-            <div id="preConditionsEditor" style="height: 100px;"></div>
-            <textarea id="preConditions" name="preConditions" style="display:none;"></textarea>
+          <div class="form-group form-toggle">
+            <label for="toggleTestData" class="toggle-label">Include Test Data?</label>
+            <label class="switch">
+              <input type="checkbox" id="toggleTestData">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          
+          <div class="form-row-editors">
+            
+            <div class="form-group editor-group">
+              <label for="preConditions">Pre-conditions</label>
+              <div id="preConditionsEditor" style="height: 200px;"></div>
+              <textarea id="preConditions" name="preConditions" style="display:none;"></textarea>
+            </div>
+          
+            <div class="form-group editor-group">
+              <label for="steps">Steps</label>
+              <div id="stepsEditor" style="height: 200px;"></div>
+              <textarea id="steps" name="steps" style="display:none;"></textarea>
+            </div>
+          
+            <div class="form-group editor-group" id="testDataGroup" style="display: none;">
+              <label for="testData">Test Data</label>
+              <div id="testDataEditor" style="height: 200px;"></div>
+              <textarea id="testData" name="testData" style="display:none;"></textarea>
+            </div>
+          
           </div>
 
-          <div class="form-group">
-            <label for="steps">Steps</label>
-            <div id="stepsEditor" style="height: 200px;"></div>
-            <textarea id="steps" name="steps" style="display:none;"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="testData">Test Data</label>
-            <div id="testDataEditor" style="height: 100px;"></div>
-            <textarea id="testData" name="testData" style="display:none;"></textarea>
-          </div>
-
-          <div class="form-group">
+          <div class="form-row-editors">
+          <div class="form-group editor-group">
             <label for="expected">Expected Behaviour</label>
             <div id="expectedEditor" style="height: 150px;"></div>
             <textarea id="expected" name="expected" style="display:none;"></textarea>
           </div>
 
-          <div class="form-group">
+          <div class="form-group editor-group">
             <label for="actualOutput">Actual Output</label>
             <div id="actualOutputEditor" style="height: 150px;"></div>
             <textarea id="actualOutput" name="actualOutput" style="display:none;"></textarea>
           </div>
+        </div>
 
           <div class="modal-footer">
             <button type="button" class="secondary" id="cancelAddTest">Cancel</button>
@@ -495,35 +510,49 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group form-toggle">
+            <label for="toggleEditTestData" class="toggle-label">Include Test Data?</label>
+            <label class="switch">
+              <input type="checkbox" id="toggleEditTestData">
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="form-row-editors">
+            <div class="form-group editor-group">
             <label for="editPreConditions">Pre-conditions</label>
-            <div id="editPreConditionsEditor" style="height: 100px;"></div>
+            <div id="editPreConditionsEditor"></div>
             <textarea id="editPreConditions" name="preConditions" style="display:none;"></textarea>
           </div>
 
-          <div class="form-group">
+          <div class="form-group editor-group">
             <label for="editSteps">Steps</label>
             <div id="editStepsEditor" style="height: 200px;"></div>
             <textarea id="editSteps" name="steps" style="display:none;"></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="editTestData">Test Data</label>
-            <div id="editTestDataEditor" style="height: 100px;"></div>
-            <textarea id="editTestData" name="testData" style="display:none;"></textarea>
+          <div class="form-row-editors">
+            <div class="form-group editor-group" id="editTestDataGroup" style="display: none;">
+              <label for="editTestData">Test Data</label>
+              <div id="editTestDataEditor" style="height: 200px;"></div>
+              <textarea id="editTestData" name="testData" style="display:none;"></textarea>
+            </div>
           </div>
+        </div>
 
-          <div class="form-group">
+        <div class="form-row-editors">
+          <div class="form-group editor-group">
             <label for="editExpected">Expected Behaviour</label>
             <div id="editExpectedEditor" style="height: 150px;"></div>
             <textarea id="editExpected" name="expected" style="display:none;"></textarea>
           </div>
 
-          <div class="form-group">
+          <div class="form-group editor-group">
             <label for="editActualOutput">Actual Output</label>
             <div id="editActualOutputEditor" style="height: 150px;"></div>
             <textarea id="editActualOutput" name="actualOutput" style="display:none;"></textarea>
           </div>
+        </div>
 
           <div class="modal-footer">
             <button type="button" class="secondary" id="cancelEditTest">Cancel</button>
@@ -533,12 +562,88 @@
       </div>
     </div>
 
+    <div id="bulkEditModal" class="modal">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h3>Bulk Edit Selected Test Cases</h3>
+              <button class="modal-close" id="closeBulkEditModal">&times;</button>
+          </div>
+          <form id="bulkEditForm">
+              <p>Select a field, enter a new value, and it will be applied to all selected test cases.</p>
+              
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_folderId" class="bulk-edit-toggle">
+                  <label for="bulkEditFolder">Module</label>
+                  <select id="bulkEditFolder" name="folderId" disabled></select>
+              </div>
+  
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_status" class="bulk-edit-toggle">
+                  <label for="bulkEditStatus">Status</label>
+                  <select id="bulkEditStatus" name="status" disabled>
+                      <option value="Not Run">Not Run</option>
+                      <option value="Pass">Pass</option>
+                      <option value="Fail">Fail</option>
+                      <option value="Blocked">Blocked</option>
+                  </select>
+              </div>
+              
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_tags" class="bulk-edit-toggle">
+                  <label for="bulkEditTags">Tags</label>
+                  <input type="text" id="bulkEditTags" name="tags" placeholder="e.g., smoke, regression" disabled>
+              </div>
+  
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_ticketId" class="bulk-edit-toggle">
+                  <label for="bulkEditTicketId">Ticket ID</label>
+                  <input type="text" id="bulkEditTicketId" name="ticketId" placeholder="e.g., PROJ-123" disabled>
+              </div>
+              
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_preConditions" class="bulk-edit-toggle">
+                  <label for="bulkEditPreConditions">Pre-conditions</label>
+                  <textarea id="bulkEditPreConditions" name="preConditions" rows="3" disabled></textarea>
+              </div>
+              
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_steps" class="bulk-edit-toggle">
+                  <label for="bulkEditSteps">Steps</label>
+                  <textarea id="bulkEditSteps" name="steps" rows="3" disabled></textarea>
+              </div>
+              
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_testData" class="bulk-edit-toggle">
+                  <label for="bulkEditTestData">Test Data</label>
+                  <textarea id="bulkEditTestData" name="testData" rows="3" disabled></textarea>
+              </div>
+              
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_expected" class="bulk-edit-toggle">
+                  <label for="bulkEditExpected">Expected</label>
+                  <textarea id="bulkEditExpected" name="expected" rows="3" disabled></textarea>
+              </div>
+              
+              <div class="bulk-edit-row">
+                  <input type="checkbox" id="editField_actualOutput" class="bulk-edit-toggle">
+                  <label for="bulkEditActualOutput">Actual</label>
+                  <textarea id="bulkEditActualOutput" name="actualOutput" rows="3" disabled></textarea>
+              </div>
+  
+              <div class="modal-footer">
+                  <button type="button" class="secondary" id="cancelBulkEdit">Cancel</button>
+                  <button type="submit" id="submitBulkEdit">Apply Changes</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
     <!-- <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html-to-xlsx@0.0.8/dist/html-to-xlsx.min.js"></script>
     <script>
       // --- CONSTANTS & DOM ELEMENTS ---
-      const TESTS_PER_PAGE = 25;
+      const TESTS_PER_PAGE = 15;
       const folderList = document.getElementById('folderList');
       const folderDropdown = document.getElementById('folderDropdown');
       const parentFolderDropdown = document.getElementById('parentFolder');
@@ -944,7 +1049,20 @@
         quillInstances.editTestData.root.innerHTML = test.testData || '';
         quillInstances.editExpected.root.innerHTML = test.expected || '';
         quillInstances.editActualOutput.root.innerHTML = test.actualOutput || '';
+
+        // --- Logic for the Test Data toggle ---
+    const editTestDataGroup = document.getElementById('editTestDataGroup');
+    const toggle = document.getElementById('toggleEditTestData');
+    
+    // Check if the test case has any actual test data
+    const hasTestData = test.testData && test.testData.trim() && test.testData.trim() !== '<p><br></p>';
+    
+    // Set the state of the toggle and the visibility of the field
+    toggle.checked = hasTestData;
+    editTestDataGroup.style.display = hasTestData ? 'flex' : 'none';
+
         editModal.style.display = 'flex';
+        editModal.querySelector('.modal-content').scrollTop = 0;
       }
 
       async function handleEditTestCase(e) {
@@ -1031,6 +1149,13 @@
         currentPage = 1;
         renderTests();
         updateReport(); // Update report metrics based on filtered data if desired
+        // Add this block to set the initial column visibility
+        document.querySelectorAll('#columnVisibilityMenu input[type="checkbox"]').forEach(cb => {
+            const columnClass = `.column-${cb.value}`;
+            document.querySelectorAll(columnClass).forEach(el => {
+              el.classList.toggle('hidden-column', !cb.checked);
+            });
+          });
       }
 
       // --- PAGINATION ---
@@ -1040,8 +1165,24 @@
         prevPageBtn.disabled = currentPage <= 1;
         nextPageBtn.disabled = currentPage >= totalPages;
       }
-      function goToPreviousPage() { if (currentPage > 1) { currentPage--; renderTests(); } }
-      function goToNextPage() { if (currentPage < Math.ceil(filteredTests.length / TESTS_PER_PAGE)) { currentPage++; renderTests(); } }
+      function goToPreviousPage() { if (currentPage > 1) { currentPage--; renderTests(); }
+    // Add this block to set the initial column visibility
+    document.querySelectorAll('#columnVisibilityMenu input[type="checkbox"]').forEach(cb => {
+            const columnClass = `.column-${cb.value}`;
+            document.querySelectorAll(columnClass).forEach(el => {
+              el.classList.toggle('hidden-column', !cb.checked);
+            });
+          }); 
+    }
+      function goToNextPage() { if (currentPage < Math.ceil(filteredTests.length / TESTS_PER_PAGE)) { currentPage++; renderTests(); } 
+      // Add this block to set the initial column visibility
+      document.querySelectorAll('#columnVisibilityMenu input[type="checkbox"]').forEach(cb => {
+            const columnClass = `.column-${cb.value}`;
+            document.querySelectorAll(columnClass).forEach(el => {
+              el.classList.toggle('hidden-column', !cb.checked);
+            });
+          });
+    }
 
       // --- BULK ACTIONS & SELECTION ---
       function updateSelectedButtons() {
@@ -1251,6 +1392,31 @@ document.addEventListener('click', (e) => {
         document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
         document.getElementById('cancelImport').addEventListener('click', closeImportModal);
         document.getElementById('confirmImport').addEventListener('click', processImportedData);
+
+        document.getElementById('bulkEditBtn').addEventListener('click', openBulkEditModal);
+    document.getElementById('closeBulkEditModal').addEventListener('click', () => document.getElementById('bulkEditModal').style.display = 'none');
+    document.getElementById('cancelBulkEdit').addEventListener('click', () => document.getElementById('bulkEditModal').style.display = 'none');
+    document.getElementById('bulkEditForm').addEventListener('submit', handleBulkEdit);
+
+    // Add listener to enable/disable inputs in the modal
+    document.querySelectorAll('.bulk-edit-toggle').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            // Find the corresponding input/select element and enable/disable it
+            e.target.nextElementSibling.nextElementSibling.disabled = !e.target.checked;
+        });
+    });
+
+     // Toggle for the ADD modal
+document.getElementById('toggleTestData').addEventListener('change', function() {
+    const testDataGroup = document.getElementById('testDataGroup');
+    testDataGroup.style.display = this.checked ? 'flex' : 'none';
+});
+
+// Toggle for the EDIT modal
+document.getElementById('toggleEditTestData').addEventListener('change', function() {
+    const editTestDataGroup = document.getElementById('editTestDataGroup');
+    editTestDataGroup.style.display = this.checked ? 'flex' : 'none';
+});
 
         // Add this inside your setupEventListeners function
 document.getElementById('toggleFolderFormBtn').addEventListener('click', function() {
@@ -1700,6 +1866,78 @@ function parseExcelDataWithMultiline(data) {
           }
         });
       }
+
+      // Add these THREE new functions anywhere inside your <script> tag
+
+function openBulkEditModal() {
+    const form = document.getElementById('bulkEditForm');
+    form.reset(); // Clear previous selections
+
+    // Populate the folder dropdown
+    const bulkFolderDropdown = document.getElementById('bulkEditFolder');
+    bulkFolderDropdown.innerHTML = ''; // Clear old options
+    allFolders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.id;
+        option.textContent = folder.name;
+        bulkFolderDropdown.appendChild(option);
+    });
+
+    // Disable all inputs initially
+    form.querySelectorAll('select, input[type="text"]').forEach(input => input.disabled = true);
+
+    document.getElementById('bulkEditModal').style.display = 'flex';
+}
+
+async function handleBulkEdit(event) {
+    event.preventDefault();
+    
+    const updates = {};
+    const testIds = Array.from(selectedTests);
+
+    // Collect data only from the checked and enabled fields
+    document.querySelectorAll('.bulk-edit-toggle:checked').forEach(checkbox => {
+        const fieldName = checkbox.id.split('_')[1]; // e.g., "folderId"
+        const inputElement = document.getElementById(`bulkEdit${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}`);
+        if(inputElement) {
+            updates[fieldName] = inputElement.value;
+        }
+    });
+
+    if (Object.keys(updates).length === 0) {
+        return showToast('Please select at least one field to update.', 'error');
+    }
+
+    try {
+        showLoading(true);
+        const response = await fetch('/api/tests/batch', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testIds, updates })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
+        
+        document.getElementById('bulkEditModal').style.display = 'none';
+        showToast(`${result.affectedRows} test case(s) updated successfully!`, 'success');
+        await fetchTests(); // Refresh the table
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+
+// --- REQUIRED UPDATES TO EXISTING FUNCTIONS ---
+
+// 1. Update this function to enable/disable the new button
+function updateSelectedButtons() {
+    const hasSelection = selectedTests.size > 0;
+    copySelectedBtn.disabled = !hasSelection;
+    deleteSelectedBtn.disabled = !hasSelection;
+    document.getElementById('bulkEditBtn').disabled = !hasSelection; // Add this line
+}
 
     </script>
 </body>

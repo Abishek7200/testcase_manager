@@ -424,6 +424,64 @@ router.patch('/tests/:testId/status', async (req, res) => {
     }
 });
 
+router.patch('/tests/batch', async (req, res) => {
+    const { testIds, updates } = req.body;
+
+    if (!testIds || !Array.isArray(testIds) || testIds.length === 0) {
+        return res.status(400).json({ error: 'An array of testIds is required.' });
+    }
+    if (!updates || Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'An updates object with fields to change is required.' });
+    }
+
+    // Map all the fields you want to be bulk-editable
+    const columnMapping = {
+        folderId: 'folder_id',
+        ticketId: 'ticket_id',
+        tags: 'tags',
+        status: 'test_status',
+        preConditions: 'preConditions', // Added
+        steps: 'steps',                 // Added
+        testData: 'testData',           // Added
+        expected: 'expected',           // Added
+        actualOutput: 'actualOutput'    // Added
+    };
+
+    const setClauses = [];
+    const queryParams = [];
+
+    // This part of the code dynamically builds the query, no changes needed here.
+    for (const key in updates) {
+        if (Object.prototype.hasOwnProperty.call(updates, key) && columnMapping[key]) {
+            setClauses.push(`${columnMapping[key]} = ?`);
+            queryParams.push(updates[key]);
+        }
+    }
+
+    if (setClauses.length === 0) {
+        return res.status(400).json({ error: 'No valid fields provided for update.' });
+    }
+
+    const sql = `
+        UPDATE tests 
+        SET ${setClauses.join(', ')} 
+        WHERE id IN (?)
+    `;
+    queryParams.push(testIds);
+
+    try {
+        const [result] = await db.query(sql, queryParams);
+        res.json({ 
+            success: true, 
+            message: `${result.affectedRows} test case(s) updated successfully.`,
+            affectedRows: result.affectedRows 
+        });
+    } catch (err) {
+        console.error('Batch update database error:', err);
+        res.status(500).json({ error: 'A database error occurred during the bulk update.' });
+    }
+});
+
 router.delete('/tests/:testId', async (req, res) => {
     try {
         const {
