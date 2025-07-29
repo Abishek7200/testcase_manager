@@ -11,7 +11,9 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      /* Using a dynamic image related to Chennai for a local touch */
+      background: url('https://source.unsplash.com/1600x900/?chennai,marina-beach') no-repeat center center fixed;
+      background-size: cover;
       color: #333;
       display: flex;
       justify-content: center;
@@ -19,61 +21,78 @@
       height: 100vh;
     }
     .container {
-      background: white;
-      padding: 2.5rem 3rem;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 3rem 4rem;
       border-radius: 12px;
-      box-shadow: 0 15px 25px rgba(0,0,0,0.2);
-      width: 320px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+      width: 360px;
       text-align: center;
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem auto; /* Correctly centers the logo */
+      border-radius: 50%;
+      background-color: #667eea;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: bold;
     }
     h2 {
       margin-bottom: 1.5rem;
       font-weight: 700;
       color: #4a4a4a;
+      font-size: 2.2rem;
     }
     form {
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1.5rem;
     }
-    input[type="text"],
-    input[type="password"] {
-      padding: 0.9rem 1.2rem;
-      font-size: 1rem;
+    input::placeholder {
+      color: #aaa;
+    }
+    input {
+      padding: 1rem 1.5rem;
+      font-size: 1.1rem;
       border: 2px solid #ddd;
-      border-radius: 8px;
+      border-radius: 10px;
       transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
-    input[type="text"]:focus,
-    input[type="password"]:focus {
+    input:focus {
       border-color: #667eea;
-      box-shadow: 0 0 8px rgba(102, 126, 234, 0.6);
+      box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
       outline: none;
     }
     button {
-      padding: 0.9rem 1.2rem;
-      font-size: 1.1rem;
+      padding: 1rem 1.5rem;
+      font-size: 1.2rem;
       font-weight: 600;
       background: #667eea;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: background 0.3s ease;
-      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.5);
+      transition: background 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
     }
     button:hover {
       background: #5563c1;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.5);
     }
     p {
-      margin-top: 1.5rem;
-      font-size: 0.9rem;
-      color: #666;
+      margin-top: 2rem;
+      font-size: 1rem;
+      color: #555;
     }
     a {
       color: #667eea;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 700;
       transition: color 0.3s ease;
     }
     a:hover {
@@ -84,7 +103,8 @@
 </head>
 <body>
   <div class="container" role="main" aria-label="Login Form">
-    <h2>Login</h2>
+    <!-- <div class="logo">TCM</div> -->
+    <h2>Sign In</h2>
     <form id="loginForm" autocomplete="off" novalidate>
       <input type="text" name="username" placeholder="Username" required aria-label="Username" />
       <input type="password" name="password" placeholder="Password" required aria-label="Password" />
@@ -95,42 +115,39 @@
 
   <script>
     document.getElementById('loginForm').addEventListener('submit', async function(event) {
-  event.preventDefault();
-  
-  const username = event.target.username.value.trim();
-  const password = event.target.password.value;
-  const submitBtn = event.target.querySelector('button[type="submit"]');
-  
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Logging in...';
-  
-  try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      event.preventDefault();
+
+      const username = event.target.username.value.trim();
+      const password = event.target.password.value;
+      const submitBtn = event.target.querySelector('button');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        localStorage.setItem('username', username);
+        window.location.href = data.redirect || '/module';
+
+      } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || 'Login failed. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
+      }
     });
-
-    const data = await response.json();
-
-    if (!data.success) {
-      throw new Error(data.error || 'Login failed');
-    }
-
-    // Store username in localStorage upon successful login
-    localStorage.setItem('username', username);
-
-    // Redirect on success
-    window.location.href = data.redirect || '/module';
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    alert(error.message || 'Login failed. Please try again.');
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Login';
-  }
-});
   </script>
 </body>
 </html>

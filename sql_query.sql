@@ -65,3 +65,15 @@ CREATE TABLE IF NOT EXISTS issue_testcases (
 
 SELECT * FROM issue_testcases;
 
+
+-- added on 29 july
+ALTER TABLE folders ADD COLUMN parentId INT NULL;
+ALTER TABLE folders ADD CONSTRAINT fk_parent_folder FOREIGN KEY (parentId) REFERENCES folders(id) ON DELETE CASCADE;
+
+ALTER TABLE tests
+ADD COLUMN tags VARCHAR(255) NULL,
+ADD COLUMN preConditions TEXT NULL,
+ADD COLUMN testData TEXT NULL,
+ADD COLUMN actualOutput TEXT NULL;
+
+ALTER TABLE tests ADD COLUMN ticket_id VARCHAR(50) NULL AFTER title;
