@@ -182,9 +182,6 @@
     <div class="controls-container">
       <h2 id="contentTitle">All Test Cases</h2>
 
-
-
-
       <!-- Report Visualization -->
       <div class="test-report">
         <div class="report-card total-tests">
@@ -301,7 +298,7 @@
         </div>
       </div>
 
-      <div style="display: flex;position: relative;justify-self: right;left: 55%;">
+      <div style="display: contents;position: relative;justify-self: right;left: 55%;">
         <div class="column-visibility">
           <button class="column-visibility-btn add-test-btn" id="columnVisibilityBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -704,6 +701,8 @@
             document.querySelectorAll(columnClass).forEach(el => el.classList.add('hidden-column'));
           }
         });
+
+        document.getElementById('contentTitle').textContent = `All Test Cases (${allTestsData.length})`;
       }
 
       // --- QUILL EDITOR MANAGEMENT ---
@@ -958,15 +957,29 @@
         });
       }
 
-      function filterTestsByFolder(folderId, folderName) {
-        currentFolderId = folderId;
-        document.querySelectorAll('.folder-content.active').forEach(el => el.classList.remove('active'));
-        const target = folderId === 'all' ? document.getElementById('allTestsItem') : document.querySelector(`.folder-item[data-folder-id="${folderId}"]`);
-        if (target) target.querySelector('.folder-content').classList.add('active');
-        contentTitle.textContent = folderName || 'All Test Cases';
-        currentPage = 1;
-        fetchTests();
-      }
+      async function filterTestsByFolder(folderId, folderName) {
+    currentFolderId = folderId;
+
+    // Update the active state in the sidebar
+    document.querySelectorAll('.folder-content.active').forEach(el => el.classList.remove('active'));
+    const targetElement = folderId === 'all' 
+        ? document.getElementById('allTestsItem') 
+        : document.querySelector(`.folder-item[data-folder-id="${folderId}"]`);
+    
+    if (targetElement) {
+        targetElement.querySelector('.folder-content').classList.add('active');
+    }
+    
+    // Wait for the test data for this folder to be fetched
+    await fetchTests(); 
+
+    // Now that we have the data, get the count
+    const count = allTestsData.length;
+    const title = folderName ? folderName : 'All Test Cases';
+
+    // Set the contentTitle with the name and the count
+    contentTitle.textContent = `${title} (${count})`;
+}
 
       function renderTests() {
         testTableBody.innerHTML = '';
@@ -1016,6 +1029,7 @@
           if (!key.startsWith('edit')) quillInstances[key].setContents([]);
         }
         addTestModal.style.display = 'flex';
+        addTestModal.querySelector('.modal-content').scrollTop = 0;
       }
 
       async function handleAddTestCase(e) {

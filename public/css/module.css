@@ -1006,6 +1006,7 @@ select[multiple] option {
   .column-visibility {
     position: relative;
     display: flex;
+    margin-left: auto;
   }
   
   .column-visibility-btn {
@@ -1017,7 +1018,7 @@ select[multiple] option {
   
   .column-visibility-menu {
     position: absolute;
-    right: 386px;
+    right: 466px;
     top: -33px;
     background: white;
     border: 1px solid #ddd;
