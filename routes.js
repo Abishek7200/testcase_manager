@@ -157,13 +157,9 @@ router.get('/logout', (req, res) => {
     });
 })
 
-const webUiRouter = express.Router();
-webUiRouter.use(isAuthenticated);
-
-
 // --- FOLDER ROUTES (Updated for nesting) ---
 
-webUiRouter.get('/folders', async (req, res) => {
+router.get('/folders', isAuthenticated, async (req, res) => {
     try {
         // Fetch all folders along with their parentId and a count of test cases
         const [folders] = await db.query(`
@@ -184,7 +180,7 @@ webUiRouter.get('/folders', async (req, res) => {
     }
 });
 
-webUiRouter.post('/folders', async (req, res) => {
+router.post('/folders', isAuthenticated, async (req, res) => {
     try {
         const {
             name,
@@ -225,7 +221,7 @@ async function getChildFolderIds(folderId, connection) {
     return childIds;
 }
 
-webUiRouter.delete('/folders/:folderId', async (req, res) => {
+router.delete('/folders/:folderId', isAuthenticated, async (req, res) => {
     const {
         folderId
     } = req.params;
@@ -267,7 +263,7 @@ webUiRouter.delete('/folders/:folderId', async (req, res) => {
 
 // --- TEST ROUTES (Updated with new fields) ---
 
-webUiRouter.get('/tests', async (req, res) => {
+router.get('/tests', isAuthenticated, async (req, res) => {
     try {
         const {
             folderId
@@ -329,7 +325,7 @@ webUiRouter.get('/tests', async (req, res) => {
     }
 });
 
-webUiRouter.post('/tests', async (req, res) => {
+router.post('/tests', isAuthenticated, async (req, res) => {
     try {
         const {
             title, folderId, ticketId, tags, preConditions, steps, testData, 
@@ -366,7 +362,7 @@ webUiRouter.post('/tests', async (req, res) => {
     }
 });
 
-webUiRouter.put('/tests', async (req, res) => {
+router.put('/tests', isAuthenticated, async (req, res) => {
     try {
         const {
             id,
@@ -398,7 +394,7 @@ webUiRouter.put('/tests', async (req, res) => {
     }
 });
 
-webUiRouter.patch('/tests/:testId/status', async (req, res) => {
+router.patch('/tests/:testId/status', isAuthenticated, async (req, res) => {
     try {
         const {
             testId
@@ -418,7 +414,7 @@ webUiRouter.patch('/tests/:testId/status', async (req, res) => {
     }
 });
 
-webUiRouter.patch('/tests/batch', async (req, res) => {
+router.patch('/tests/batch', isAuthenticated, async (req, res) => {
     const { testIds, updates } = req.body;
 
     if (!testIds || !Array.isArray(testIds) || testIds.length === 0) {
@@ -476,7 +472,7 @@ webUiRouter.patch('/tests/batch', async (req, res) => {
     }
 });
 
-webUiRouter.delete('/tests/:testId', async (req, res) => {
+router.delete('/tests/:testId', isAuthenticated, async (req, res) => {
     try {
         const {
             testId
@@ -493,7 +489,7 @@ webUiRouter.delete('/tests/:testId', async (req, res) => {
     }
 });
 
-webUiRouter.delete('/selectedtests/batch', async (req, res) => {
+router.delete('/selectedtests/batch', isAuthenticated, async (req, res) => {
     try {
         const {
             testIds
@@ -517,8 +513,6 @@ webUiRouter.delete('/selectedtests/batch', async (req, res) => {
         });
     }
 });
-
-router.use(webUiRouter);
 
 const forgeApiRouter = express.Router();
 forgeApiRouter.use(apiKeyAuth);
