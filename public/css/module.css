@@ -21,6 +21,7 @@
 
 body {
     font-family: 'Inter', sans-serif;
+    font-size: medium;
     margin: 0;
     display: flex;
     height: 100vh;
@@ -142,7 +143,7 @@ select,
 textarea,
 button {
     font-family: 'Inter', sans-serif;
-    font-size: 0.875rem;
+    /* font-size: 0.875rem; */
     border-radius: var(--border-radius);
     transition: var(--transition);
 }
@@ -223,7 +224,7 @@ button.secondary:hover {
 
 .folder-actions button {
     padding: 2px 6px;
-    font-size: 0.75rem;
+    /* font-size: 0.75rem; */
     background-color: transparent;
     color: inherit;
     border: none;
@@ -253,12 +254,12 @@ button.secondary:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 10px;
     width: -webkit-fill-available;
 }
 
 .content h2 {
-    font-size: 1.5rem;
+    /* font-size: 1.5rem; */
     font-weight: 600;
     color: var(--dark);
 }
@@ -283,7 +284,7 @@ table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    margin-top: 20px;
+    margin-top: 10px;
     background-color: white;
     border-radius: var(--border-radius);
     overflow: hidden;
@@ -293,7 +294,7 @@ table {
 
 th,
 td {
-    padding: 12px 15px;
+    padding: 10px 12px;
     text-align: left;
     border-bottom: 1px solid var(--gray-light);
 }
@@ -321,7 +322,7 @@ tr:hover {
     background: none;
     border: none;
     color: var(--gray);
-    font-size: 1rem;
+    /* font-size: 1rem; */
     width: 24px;
     height: 24px;
     display: flex;
@@ -417,7 +418,7 @@ tr:hover {
 }
 
 .modal-header h3 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 600;
 }
 
@@ -598,7 +599,7 @@ textarea {
     display: inline-block;
     padding: 3px 8px;
     border-radius: 12px;
-    font-size: 12px;
+    /* font-size: 12px; */
     font-weight: 500;
 }
 
@@ -724,14 +725,14 @@ textarea {
     padding: 10px 15px;
     border: 1px solid #ddd;
     border-radius: 50px;
-    font-size: 14px;
+    /* font-size: 14px; */
   }
   
   /* Test Report */
   .test-report {
     display: flex;
     gap: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     flex-wrap: wrap;
     width: -webkit-fill-available;
   }
@@ -753,13 +754,13 @@ textarea {
   
   .report-count {
     display: block;
-    font-size: 24px;
-    font-weight: 700;
+    /* font-size: 24px; */
+    /* font-weight: 700; */
     margin-bottom: 5px;
   }
   
   .report-label {
-    font-size: 14px;
+    /* font-size: 14px; */
     color: #666;
   }
   
@@ -784,7 +785,7 @@ textarea {
   .filter-group label {
     display: block;
     margin-bottom: 5px;
-    font-size: 13px;
+    /* font-size: 13px; */
     font-weight: 500;
     color: #555;
   }
@@ -794,7 +795,7 @@ textarea {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 13px;
+    /* font-size: 13px; */
   }
   
   .filter-group select[multiple] {
@@ -845,7 +846,7 @@ select[multiple] option {
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 50px;
-    font-size: 14px;
+    /* font-size: 14px; */
   }
   
   .filter-btn {
@@ -857,7 +858,7 @@ select[multiple] option {
     border: 1px solid #ddd;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    /* font-size: 14px; */
   }
   
   .filter-btn:hover {
@@ -888,11 +889,11 @@ select[multiple] option {
   
   .report-count {
     font-weight: 600;
-    font-size: 26px;
+    font-size: 22px;
   }
   
   .report-label {
-    font-size: 12px;
+    /* font-size: 12px; */
     color: #666;
   }
   
@@ -927,7 +928,7 @@ select[multiple] option {
   .filter-group label {
     display: block;
     margin-bottom: 5px;
-    font-size: 13px;
+    /* font-size: 13px; */
     font-weight: 500;
     color: #555;
   }
@@ -955,7 +956,7 @@ select[multiple] option {
   
   .primary-btn, .secondary-btn {
     padding: 6px 12px;
-    font-size: 13px;
+    /* font-size: 13px; */
     height: fit-content;
     align-self: flex-end;
   }
@@ -981,7 +982,7 @@ select[multiple] option {
     padding: 8px 10px;
     border: 1px solid #ddd;
     border-radius: 50px;
-    font-size: 14px;
+    /* font-size: 14px; */
   }
   
   .subfolder {
@@ -1094,7 +1095,7 @@ select[multiple] option {
     border: 1px solid #ddd;
     border-radius: 6px;
     text-align: left;
-    font-size: 16px;
+    /* font-size: 16px; */
     font-weight: 500;
     display: flex;
     justify-content: space-between;
@@ -1132,7 +1133,7 @@ select[multiple] option {
   #logoutBtn {
     width: 100%;
     padding: 10px;
-    font-size: 15px;
+    /* font-size: 15px; */
     font-weight: 500;
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
