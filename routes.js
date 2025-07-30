@@ -3,29 +3,23 @@ const bcrypt = require('bcrypt');
 const db = require('./db');
 const router = express.Router();
 
-// --- AUTH MIDDLEWARE & ROUTES (No changes here) ---
-
 function isAuthenticated(req, res, next) {
-    // Public routes that don't need authentication
-    if (['/login', '/register', '/check-auth'].includes(req.path)) {
+    if (req.session?.isAuthenticated) {
         return next();
     }
-    // Allow serving static files needed for login/register page
-    if (req.path.endsWith('.html') || req.path.startsWith('/public/')) {
-        return next();
-    }
-    // Check for session authentication
-    if (!req.session?.isAuthenticated) {
-        console.log('Unauthorized access attempt to:', req.path);
-        // Respond with 401 for API calls, redirect for page loads
-        return req.xhr || req.accepts('json') ?
-            res.status(401).json({
-                error: 'Unauthorized'
-            }) :
-            res.redirect('/login.html');
+    return res.status(401).json({ error: 'User not authenticated' });
+}
+
+// Middleware for Forge API Key Authentication
+const apiKeyAuth = (req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    const serverApiKey = 'S3cr3t_f0r_TCM_@pp_gH7qP9zR2x'; // IMPORTANT: Use process.env for this!
+  
+    if (!apiKey || apiKey !== serverApiKey) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
     }
     next();
-}
+  };
 
 router.post('/register', async (req, res) => {
     try {
@@ -161,14 +155,15 @@ router.get('/logout', (req, res) => {
             success: true
         });
     });
-});
+})
 
-router.use(isAuthenticated);
+const webUiRouter = express.Router();
+webUiRouter.use(isAuthenticated);
 
 
 // --- FOLDER ROUTES (Updated for nesting) ---
 
-router.get('/folders', async (req, res) => {
+webUiRouter.get('/folders', async (req, res) => {
     try {
         // Fetch all folders along with their parentId and a count of test cases
         const [folders] = await db.query(`
@@ -189,7 +184,7 @@ router.get('/folders', async (req, res) => {
     }
 });
 
-router.post('/folders', async (req, res) => {
+webUiRouter.post('/folders', async (req, res) => {
     try {
         const {
             name,
@@ -230,7 +225,7 @@ async function getChildFolderIds(folderId, connection) {
     return childIds;
 }
 
-router.delete('/folders/:folderId', async (req, res) => {
+webUiRouter.delete('/folders/:folderId', async (req, res) => {
     const {
         folderId
     } = req.params;
@@ -272,7 +267,7 @@ router.delete('/folders/:folderId', async (req, res) => {
 
 // --- TEST ROUTES (Updated with new fields) ---
 
-router.get('/tests', async (req, res) => {
+webUiRouter.get('/tests', async (req, res) => {
     try {
         const {
             folderId
@@ -334,39 +329,7 @@ router.get('/tests', async (req, res) => {
     }
 });
 
-// 1. Define your secret API key
-const SERVER_API_KEY = 'S3cr3t_f0r_TCM_@pp_gH7qP9zR2x'; // Change this to your own long, random string
-
-// 2. Create the authentication middleware
-const apiKeyAuth = (req, res, next) => {
-  const apiKey = req.headers['x-api-key'];
-  
-  if (!apiKey || apiKey !== SERVER_API_KEY) {
-    // If the key is missing or wrong, block the request
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  // If the key is correct, allow the request to continue
-  next();
-};
-
-// 3. Apply the middleware to protect all routes starting with /api/
-// Place this line BEFORE your API route definitions
-router.use('/api/', apiKeyAuth);
-
-//this is for forge app
-router.get('/api/testcases', async (req, res) => {
-    try {
-        // This query can be as simple or complex as you need
-        const [testcases] = await db.query('SELECT id, test_case_id, title, status FROM tests ORDER BY id DESC');
-        res.json(testcases);
-    } catch (err) {
-        console.error('API fetch error:', err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-
-router.post('/tests', async (req, res) => {
+webUiRouter.post('/tests', async (req, res) => {
     try {
         const {
             title, folderId, ticketId, tags, preConditions, steps, testData, 
@@ -403,7 +366,7 @@ router.post('/tests', async (req, res) => {
     }
 });
 
-router.put('/tests', async (req, res) => {
+webUiRouter.put('/tests', async (req, res) => {
     try {
         const {
             id,
@@ -435,7 +398,7 @@ router.put('/tests', async (req, res) => {
     }
 });
 
-router.patch('/tests/:testId/status', async (req, res) => {
+webUiRouter.patch('/tests/:testId/status', async (req, res) => {
     try {
         const {
             testId
@@ -455,7 +418,7 @@ router.patch('/tests/:testId/status', async (req, res) => {
     }
 });
 
-router.patch('/tests/batch', async (req, res) => {
+webUiRouter.patch('/tests/batch', async (req, res) => {
     const { testIds, updates } = req.body;
 
     if (!testIds || !Array.isArray(testIds) || testIds.length === 0) {
@@ -513,7 +476,7 @@ router.patch('/tests/batch', async (req, res) => {
     }
 });
 
-router.delete('/tests/:testId', async (req, res) => {
+webUiRouter.delete('/tests/:testId', async (req, res) => {
     try {
         const {
             testId
@@ -530,7 +493,7 @@ router.delete('/tests/:testId', async (req, res) => {
     }
 });
 
-router.delete('/selectedtests/batch', async (req, res) => {
+webUiRouter.delete('/selectedtests/batch', async (req, res) => {
     try {
         const {
             testIds
@@ -554,6 +517,64 @@ router.delete('/selectedtests/batch', async (req, res) => {
         });
     }
 });
+
+router.use(webUiRouter);
+
+const forgeApiRouter = express.Router();
+forgeApiRouter.use(apiKeyAuth);
+
+// This is the endpoint your 'searchTestCases' resolver calls.
+forgeApiRouter.get('/tests', async (req, res) => {
+    try {
+        const { query } = req.query;
+        const [rows] = await db.query(
+          `SELECT id, test_case_id, title, steps, expected 
+           FROM tests 
+           WHERE title LIKE ? OR test_case_id LIKE ?`,
+          [`%${query || ''}%`, `%${query || ''}%`]
+        );
+        res.json(rows);
+    } catch (err) {
+        console.error('API Search Error:', err);
+        res.status(500).json({ error: 'API search failed.' });
+    }
+});
+
+// Endpoint for 'getAddedTestCases' resolver
+forgeApiRouter.get('/issue-testcases/:issueKey', async (req, res) => {
+    try {
+        const { issueKey } = req.params;
+        const [rows] = await db.query(`SELECT test_id, test_case_id, title FROM issue_testcases WHERE issue_key = ?`, [issueKey]);
+        res.json(rows.map(row => ({ id: row.test_id, test_case_id: row.test_case_id, title: row.title })));
+    } catch (error) {
+        res.status(500).json({ error: 'DB error' });
+    }
+});
+
+// Endpoint for 'addTestCaseToIssue' resolver
+forgeApiRouter.post('/issue-testcases', async (req, res) => {
+    try {
+        const { issueKey, test } = req.body;
+        await db.query(`INSERT IGNORE INTO issue_testcases (issue_key, test_id, test_case_id, title) VALUES (?, ?, ?, ?)`, [issueKey, test.id, test.test_case_id, test.title]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'DB error' });
+    }
+});
+
+// Endpoint for 'removeTestCaseFromIssue' resolver
+forgeApiRouter.delete('/issue-testcases', async (req, res) => {
+    try {
+        const { issueKey, testId } = req.body;
+        await db.query(`DELETE FROM issue_testcases WHERE issue_key = ? AND test_id = ?`, [issueKey, testId]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'DB error' });
+    }
+});
+
+// Mount the Forge API router under the /api path
+router.use('/api', forgeApiRouter);
 
 
 module.exports = router;

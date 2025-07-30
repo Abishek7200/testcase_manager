@@ -723,7 +723,7 @@
       // --- FOLDER MANAGEMENT ---
       async function fetchFolders() {
         try {
-          const response = await fetch('/api/folders');
+          const response = await fetch('/folders');
           if (!response.ok) throw new Error('Failed to fetch folders');
           allFolders = await response.json();
           renderFolders();
@@ -856,7 +856,7 @@
         }
 
         try {
-          const res = await fetch('/api/folders', {
+          const res = await fetch('/folders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: folderName, parentId })
@@ -876,7 +876,7 @@
         try {
           showLoading(true);
 
-          const res = await fetch(`/api/folders/${id}`, {
+          const res = await fetch(`/folders/${id}`, {
             method: 'DELETE'
           });
 
@@ -901,7 +901,7 @@
       async function fetchTests() {
         try {
           showLoading(true);
-          const url = `/api/tests${(currentFolderId && currentFolderId !== 'all') ? '?folderId=' + currentFolderId : ''}`;
+          const url = `/tests${(currentFolderId && currentFolderId !== 'all') ? '?folderId=' + currentFolderId : ''}`;
           const response = await fetch(url);
           if (!response.ok) throw new Error('Failed to load tests');
 
@@ -911,7 +911,7 @@
           const allTestsCountElement = document.getElementById('allTestsCount');
           if (allTestsCountElement) {
             // This count should reflect ALL tests in the database, not just the current view
-            const allTestsResponse = await fetch('/api/tests');
+            const allTestsResponse = await fetch('/tests');
             const allTests = await allTestsResponse.json();
             allTestsCountElement.textContent = allTests.length;
           }
@@ -1043,7 +1043,7 @@
         body.createdBy = username;
 
         try {
-          const res = await fetch('/api/tests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const res = await fetch('/tests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
           if (!res.ok) throw new Error('Failed to create test case');
           closeModal();
           await Promise.all([fetchTests(), fetchFolders()]);
@@ -1088,7 +1088,7 @@
         body.expected = quillInstances.editExpected.root.innerHTML;
         body.actualOutput = quillInstances.editActualOutput.root.innerHTML;
         try {
-          const res = await fetch('/api/tests', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const res = await fetch('/tests', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
           if (!res.ok) throw new Error('Failed to update test case');
           closeModal();
           await fetchTests();
@@ -1285,7 +1285,7 @@
       async function deleteSelectedTests() {
         if (selectedTests.size === 0 || !confirm(`Delete ${selectedTests.size} selected test cases?`)) return;
         try {
-          const res = await fetch('/api/selectedtests/batch', {
+          const res = await fetch('/selectedtests/batch', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ testIds: Array.from(selectedTests) })
@@ -1305,7 +1305,7 @@
 
         try {
           showLoading(true);
-          const res = await fetch(`/api/tests/${testId}`, { method: 'DELETE' });
+          const res = await fetch(`/tests/${testId}`, { method: 'DELETE' });
           if (!res.ok) {
             const errData = await res.json();
             throw new Error(errData.error || 'Failed to delete test case');
@@ -1356,7 +1356,7 @@
             const testId = e.target.dataset.testId;
             const newStatus = e.target.value;
             try {
-              const res = await fetch(`/api/tests/${testId}/status`, {
+              const res = await fetch(`/tests/${testId}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ testStatus: newStatus })
@@ -1624,7 +1624,7 @@ document.getElementById('toggleFolderFormBtn').addEventListener('click', functio
       // Authentication
       async function checkAuthentication() {
         try {
-          const response = await fetch('/api/check-auth');
+          const response = await fetch('/check-auth');
           if (!response.ok) return false;
 
           const data = await response.json();
@@ -1639,7 +1639,7 @@ document.getElementById('toggleFolderFormBtn').addEventListener('click', functio
         if (!confirm('Are you sure you want to logout?')) return;
 
         try {
-          const res = await fetch('/api/logout');
+          const res = await fetch('/logout');
 
           if (!res.ok) {
             throw new Error('Logout failed');
@@ -1710,7 +1710,7 @@ document.getElementById('toggleFolderFormBtn').addEventListener('click', functio
             if (!existingFolderNames.has(moduleName.toLowerCase())) {
               // If folder doesn't exist, create it now
               console.log(`Creating new module: ${moduleName}`);
-              const res = await fetch('/api/folders', {
+              const res = await fetch('/folders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: moduleName, parentId: null })
@@ -1752,7 +1752,7 @@ document.getElementById('toggleFolderFormBtn').addEventListener('click', functio
               createdBy: username
             };
 
-            const response = await fetch('/api/tests', {
+            const response = await fetch('/tests', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -1924,7 +1924,7 @@ async function handleBulkEdit(event) {
 
     try {
         showLoading(true);
-        const response = await fetch('/api/tests/batch', {
+        const response = await fetch('/tests/batch', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ testIds, updates })
