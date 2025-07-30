@@ -334,6 +334,37 @@ router.get('/tests', async (req, res) => {
     }
 });
 
+// 1. Define your secret API key
+const SERVER_API_KEY = 'S3cr3t_f0r_TCM_@pp_gH7qP9zR2x'; // Change this to your own long, random string
+
+// 2. Create the authentication middleware
+const apiKeyAuth = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  
+  if (!apiKey || apiKey !== SERVER_API_KEY) {
+    // If the key is missing or wrong, block the request
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  // If the key is correct, allow the request to continue
+  next();
+};
+
+// 3. Apply the middleware to protect all routes starting with /api/
+// Place this line BEFORE your API route definitions
+router.use('/api/', apiKeyAuth);
+
+//this is for forge app
+router.get('/api/testcases', async (req, res) => {
+    try {
+        // This query can be as simple or complex as you need
+        const [testcases] = await db.query('SELECT id, test_case_id, title, status FROM tests ORDER BY id DESC');
+        res.json(testcases);
+    } catch (err) {
+        console.error('API fetch error:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 
 router.post('/tests', async (req, res) => {
     try {

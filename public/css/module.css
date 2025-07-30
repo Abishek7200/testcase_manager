@@ -155,7 +155,7 @@ textarea {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #6b87a3;
-    background-color: #f2f2f2;
+    background-color: #f2f2f282;
 }
 
 input:focus,
@@ -462,7 +462,7 @@ textarea {
 .ql-editor {
     padding: 12px 15px;
     border: 1px solid #6b87a3;
-    background-color: #f2f2f2;
+    background-color: #f2f2f282;
     border-radius: var(--border-radius)8px;
 }
 
@@ -1055,10 +1055,6 @@ select[multiple] option {
   
   .hidden-column {
     display: none;
-  }
-
-  .column-status{
-    width: 12%;
   }
 
   .test-status-dropdown > option[value="Pass"] {
